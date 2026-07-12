@@ -6,7 +6,7 @@ The design reference for devloop. This is a read-on-demand reference doc (denser
 devloop takes **Spec Kit's spec-as-contract rigor** but rejects its **linear rigidity**, and is deliberately leaner than gsd (whose doc-sprawl and verifier-context-loss we avoid). Spec Kit is rigid because it lacks traceability + re-gating, so a requirements change regenerates plan→tasks→implement from the top. gsd is flexible but partly via ad-hoc deviation handling, where quality leaks. **devloop's flexibility = scoped re-entry, not loosened rigor:** blast-radius re-gating + contract-down/evidence-up traceability + bounded working set mean a change re-runs only what it affects. The SPEC contract is the invariant; the re-run scope is what flexes.
 
 ## Pipeline
-Per feature: `discuss → research → SPEC → plan → implement → verify → ship`, with cross-cutting `doctor`. `discuss`/`research` are **uncertainty-gated** (skip when intent is clear); `SPEC → ship` always runs. A **driver** sequences it autonomously; each stage is also runnable standalone (`/devloop <feature>` vs `/devloop-<stage> <feature>`).
+Per feature: `discuss → research → SPEC → plan → implement → verify → ship`, with cross-cutting `doctor` (pipeline health) and advisory `review` (quality). `discuss`/`research` are **uncertainty-gated** (skip when intent is clear); `SPEC → ship` always runs. A **driver** sequences it autonomously; each stage is also runnable standalone (`/devloop <feature>` vs `/devloop:<stage> <feature>`).
 
 | Stage | Kind | Notes |
 |---|---|---|
@@ -18,8 +18,9 @@ Per feature: `discuss → research → SPEC → plan → implement → verify �
 | verify | skill→agent | **Reasoning-blind**: judges artifacts + real test output + git log, never the implementer's narrative. Parameterized (plan-verify=goal-backward; impl-verify=run tests + TDD-commit check). |
 | ship | skill (inline, `disable-model-invocation:true`) | Push branch + open PR **only** — never auto-merge/force-push/push-to-default. PR = the human checkpoint. Idempotent. |
 | doctor | skill→agent | Pipeline-health diagnostic (distinct from verify): artifact consistency, staleness/drift, stage coherence, git hygiene. Report + optional `--fix`. On-demand + auto pre-resume. |
+| review | skill→agent | Advisory quality lane (reads & judges — the inverse of verify). Parameterized `target=plan\|impl`. plan-review at the plan→implement seam; impl-review on-demand pre-ship. Findings only, never gates. |
 
-**Agents are FUNCTIONAL** (researcher/planner/implementer/verifier/doctor), not a persona team — role expertise as concrete in-prompt directives (persona prompting gives no accuracy gain; wins come from task-decomposition + structured artifact handoffs).
+**Agents are FUNCTIONAL** (researcher/planner/implementer/verifier/doctor/reviewer), not a persona team — role expertise as concrete in-prompt directives (persona prompting gives no accuracy gain; wins come from task-decomposition + structured artifact handoffs).
 
 ## Core principles
 1. **Spec = contract.** Every criterion falsifiable and **maps to a test**; verify flags unmapped criteria. Untestable → explicit lower-confidence tier / human checkpoint (named holes, not silent).
@@ -39,29 +40,31 @@ A cheap **triage** (decoupled detection) emits an open-questions list — the **
 - **Resume = derive from artifacts** (no global journal). **Atomic writes** (temp-same-dir → fsync file → rename → fsync dir; write-once) + per-stage rename-last `.done` marker. **Implement resumes per-task from git** even on context-limit (hook `PreCompact` flushes checklist). **Dirty tree** → doctor preserves (never discards), surfaces attended, fail-closed unattended.
 
 ## Bootstrap (greenfield vs brownfield)
-Auto-detect is **greenfield-vs-brownfield only**. Stack/config/test-command detection is **brownfield-only** (they only exist to detect there). `/devloop-init` (or driver auto-runs on un-bootstrapped repo).
+Auto-detect is **greenfield-vs-brownfield only**. Stack/config/test-command detection is **brownfield-only** (they only exist to detect there). `/devloop:init` (or driver auto-runs on un-bootstrapped repo).
 - **Greenfield:** scaffold only (ROADMAP + thin forward-looking CONSTITUTION); stack chosen in spec/plan; test command established at first implement, then recorded.
 - **Brownfield:** refreshable LEARN pass (drift-stamped, incremental) → read-on-demand reference docs (not constitution bulk); code-graph via codebase-memory-mcp for reuse/impact discovery (degrade to grep/read); respect/augment existing CLAUDE.md (never clobber; enforce guideline as discipline, never append as text; doctor flags+offers refactor with confirmation).
 
 ## Disk layout
-UPPERCASE artifact names (ROADMAP/CONSTITUTION/SPEC/PLAN/RESEARCH/VERIFY/PROGRESS/ASSUMPTIONS.md); CLAUDE.md/README.md fixed; hidden markers lowercase. HYBRID metadata (human docs under `specs/<slug>/`; machine state under `.devloop/`). SEPARATE `CONSTITUTION.md`, CLAUDE.md points to it.
+UPPERCASE artifact names (ROADMAP/CONSTITUTION/SPEC/PLAN/INTENT/RESEARCH/VERIFY/PROGRESS/ASSUMPTIONS.md); CLAUDE.md/README.md fixed; hidden markers lowercase. HYBRID metadata (human docs under `specs/<slug>/`; machine state under `.devloop/`). SEPARATE `CONSTITUTION.md`, CLAUDE.md points to it.
 
 **Plugin repo** (also carries per-project artifacts — dogfooding):
 ```
 .claude-plugin/plugin.json · CLAUDE.md (router→docs/) · docs/ (per prune-test)
-skills/ drive + discuss|spec|ship (inline) + research|plan|implement|verify|doctor (thin→agent)
+skills/ drive + discuss|spec|ship (inline) + research|plan|implement|verify|doctor|review (thin→agent)
         each: SKILL.md (+ references/*.md, scripts/*.sh)
-agents/ researcher|planner|implementer|verifier|doctor.md
+agents/ researcher|planner|implementer|verifier|doctor|reviewer.md
 hooks/ hooks.json + scripts/ (tdd-gate, readonly-paths-guard, invariant hooks)
 ```
-**Per-target-project:** `CLAUDE.md · CONSTITUTION.md · ROADMAP.md (lean index: slug·status·goal·risk·depends[]·Boundary) · src/+tests/ · docs/ · .devloop/ (active, archive/) · specs/<slug>/ (SPEC durable · PLAN · RESEARCH/VERIFY/PROGRESS/ASSUMPTIONS ephemeral · <stage>.done)`
+**Per-target-project:** `CLAUDE.md · CONSTITUTION.md · ROADMAP.md (lean index: slug·status·goal·risk·depends[]·Boundary) · src/+tests/ · docs/ · .devloop/ (active, archive/) · specs/<slug>/ (SPEC durable · PLAN · INTENT/RESEARCH/VERIFY/PROGRESS/ASSUMPTIONS ephemeral · <stage>.done)`
 
-Durability: DURABLE (accumulates) = SPEC + ROADMAP + CONSTITUTION. EPHEMERAL (archive on ship) = RESEARCH/PLAN/VERIFY/PROGRESS/ASSUMPTIONS. DERIVED (regen) = PROGRESS, trace matrix. Every project (devloop included) has CLAUDE.md → docs/ created on-demand per prune test.
+Durability: DURABLE (accumulates) = SPEC + ROADMAP + CONSTITUTION. EPHEMERAL (archive on ship) = INTENT/RESEARCH/PLAN/VERIFY/PROGRESS/ASSUMPTIONS. DERIVED (regen) = PROGRESS, trace matrix. Every project (devloop included) has CLAUDE.md → docs/ created on-demand per prune test.
 
 ## Phased build roadmap
 MVP-first; each phase independently testable; implementation decisions deferred to the phase that needs them.
-- **Phase 0 — Scaffold.** plugin.json, repo skeleton, CLAUDE.md router. Validate: `claude --plugin-dir .`, `claude plugin validate`. ← current
-- **Phase 1 — Core SDD-TDD loop (MVP).** spec, plan, implement, verify, ship skills + verifier agent + tag-aware TDD hook. One feature end-to-end per-stage.
+
+**Deferral handshake (build-time convention).** A deferral is a `DEFERRED(Phase N):` marker at the change site — greppable, never a separate authored ledger (single source, no drift). The handshake is two-way: the introducing phase writes the marker; a phase is not done until `grep -rn "DEFERRED(Phase <N>)"` for its own number returns nothing unresolved — each match is implemented, or explicitly re-deferred with a *new* phase + reason. A marker **may** name the current phase (a legitimate later-slice deferral within it — e.g. the TDD hook deferred to a later Phase-1 slice — which the phase's own close-gate must clear); a marker naming an **already-completed** phase is drift. When doctor lands (Phase 2), its drift check flags any `DEFERRED(Phase < current)`. This is a scaffold for building devloop itself; it is **not** product runtime behavior.
+- **Phase 0 — Scaffold.** plugin.json, repo skeleton, CLAUDE.md router. Validate: `claude --plugin-dir .`, `claude plugin validate`.
+- **Phase 1 — Core SDD-TDD loop (MVP).** spec, plan, implement, verify, ship skills + planner/implementer/verifier agents + tag-aware TDD hook + review skill/reviewer agent (a quality-lane slice added mid-phase — **not** in the original Phase-1 scope). One feature end-to-end per-stage. ← current
 - **Phase 2 — Orchestration + autonomy + resume.** driver, self-heal loop, PROGRESS, active pointer, atomic writes + markers, doctor + resume, fail-closed.
 - **Phase 3 — Front-end + gating.** discuss, research; triage; mid-pipeline re-gating.
 - **Phase 4 — Brownfield + multi-feature.** LEARN pass + code-graph; ROADMAP with risk/depends/Boundary; cross-feature memory; archive-on-ship; CONSTITUTION generation.

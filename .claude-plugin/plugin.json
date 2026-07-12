@@ -1,7 +1,7 @@
 {
   "name": "devloop",
   "displayName": "devloop",
-  "description": "Autonomous spec-driven, test-driven SDLC pipeline: discuss → research → spec → plan → implement → verify → ship, with a cross-cutting doctor.",
+  "description": "Autonomous spec-driven, test-driven SDLC pipeline: discuss → research → SPEC → plan → implement → verify → ship, with a cross-cutting doctor and an advisory review lane.",
   "version": "0.1.0",
   "author": { "name": "Doki064" },
   "repository": "https://github.com/Doki064/devloop",

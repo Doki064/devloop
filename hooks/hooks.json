@@ -1,0 +1,18 @@
+{
+  "description": "devloop TDD gate — denies a git commit that skips RED (layer 2c defense-in-depth).",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/scripts/tdd-gate.mjs"],
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -12,4 +12,4 @@ devloop is a Claude Code plugin that runs an autonomous **spec-driven, test-driv
 - **Build methodology** (dev tooling, not the shipped plugin) — model-tiered dev-agents in `.claude/agents/` for cost-aware delegation; planning/review playbooks + the routing rule in `docs/methodology/` (loaders: `/plan-methodology`, `/review-methodology`).
 
 ## Build status
-Built in phases (see `docs/ARCHITECTURE.md` → Phased roadmap). Currently: **Phase 1 (core SDD-TDD loop)** — spec, plan, implement, verify, ship stages built + the advisory `review` lane + the tag-aware TDD hook (`hooks/scripts/tdd-gate.mjs`). Phase 1 core loop complete.
+Built in phases (see `docs/ARCHITECTURE.md` → Phased roadmap). Phase 1 (core SDD-TDD loop) complete — spec, plan, implement, verify, ship stages + the advisory `review` lane + the tag-aware TDD hook (`hooks/scripts/tdd-gate.mjs`). Currently: **Phase 2 (orchestration)** started — the `drive` skill (`/devloop <feature>`) sequences spec→verify and stops at the ship boundary. Still deferred in Phase 2: self-heal loop, resume (PROGRESS/markers), doctor.

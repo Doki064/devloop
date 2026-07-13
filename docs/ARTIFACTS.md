@@ -74,6 +74,10 @@ Check-method tag (how verify confirms it):
 ## PLAN.md
 - **Purpose:** turns the SPEC into an executable, traceable task breakdown.
 - **Location:** `specs/<slug>/PLAN.md` · **Durability:** EPHEMERAL (archived on ship).
+- **Grouping unit is the feature, not a tier inside PLAN:** PLAN stays a flat, feature-scoped task
+  list; grouping/sequencing lives one tier up in ROADMAP (`depends`/`Boundary`), never as a phase
+  tier inside PLAN — if a feature's scope outgrows one coherent PLAN, tighten its ROADMAP Boundary
+  and split the feature.
 
 ```markdown
 # Plan: <feature name>

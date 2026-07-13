@@ -14,10 +14,12 @@ If the playbook above is empty (injection didn't resolve), Read `docs/methodolog
 
 Follow the method to cross-review the landed slice: **$ARGUMENTS**
 
-When you finish, self-assess against the playbook: did following it work, or did you deviate, hit a
-gap, or find a stale claim? If a **durable** improvement surfaced (one that would change a future
-outcome, not a one-off), propose a **minimal diff** to `docs/methodology/review.md` and apply it
-**only on the user's confirm** — never silently rewrite. Keep the prune test: prefer tightening or
-replacing a line over appending; don't let the playbook grow unbounded. This is a **public** doc —
-keep any proposed change generic: never write secrets, credentials, absolute/personal paths, or
-session-specific data into it. On confirm, commit it as a focused `docs(methodology): …` change.
+## Closing step — required, not conditional
+Before you end, emit exactly one line:
+`self-assessment: <the one durable learning + its minimal-diff proposal | none>`
+`none` is a valid, expected value — the **absence** of the line is the failure, not a `none`. If a
+**durable** improvement surfaced (one that would change a future outcome, not a one-off), the line
+names it and the **minimal diff** to `docs/methodology/review.md`; apply that diff **only on the
+user's confirm** — never silently rewrite. Prune test: tighten/replace a line, don't append unbounded.
+Public doc — no secrets, credentials, absolute/personal paths, or session-specific data. On confirm,
+commit as a focused `docs(methodology): …` change.

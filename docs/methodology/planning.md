@@ -37,9 +37,11 @@ This is the core quality move. Run **both**:
   catches what your own is blind to.
 - **Your own hand-review** applying the same directives with project depth the subagent lacks.
 
-**Convergence is the signal.** Where both passes independently flag the same thing, it's real. Fold
-those findings into the plan, and record the dogfood provenance in the plan itself (a short "Dogfood
-pass" section) so the next reader sees it was pressure-tested.
+**Convergence is the signal — but both passes are the same modality.** Where both independently flag
+the same thing, it's real; fold it in and record the dogfood provenance in the plan itself (a short
+"Dogfood pass" section) so the next reader sees it was pressure-tested. Caveat: fresh + hand are both
+*reading a document*, so convergence can be agreement on a **shared** blind spot — reading never
+catches a wrong classification of environmental/runtime state; that needs execution (step 7).
 
 ### 5. Hunt the recurring finding-classes explicitly
 Two classes produce most real findings — check them deliberately every time:
@@ -68,6 +70,11 @@ behavior while passing the existing test suite).
 would fail (e.g. "`feat(foo)` as the first-ever commit, empty `git log` → DENY" when none of the
 existing fixtures exercise an empty log). Name the pitfalls a new runtime reintroduces (sync stdin,
 flush-before-exit, path separators, spawn-failure degradation) so the reviewer has a checklist.
+**When the plan's logic branches on environmental state** (git remote present/absent, unborn HEAD,
+dirty tree, path separators), *run that branch logic in isolation against each case before
+review-ready* — do not settle for another read. A reading review ratifies a plausible-but-wrong
+classification: a plan that lumped "no remote" together with "no base branch" into one
+un-bootstrapped→STOP survived four reading reviews and only broke when executed on a real local repo.
 
 ---
 

@@ -34,7 +34,7 @@ context hygiene — the detailed reasoning stays out of this conversation; only 
 target=plan` — a qualitative drift/quality pass — alongside the mechanical `/devloop:verify
 <feature-name> stage=plan` coverage check. Drift, gaps, and over-engineering are cheapest to fix now,
 while the plan is still just words and nothing is committed.
-<!-- DEFERRED(Phase 2): the driver runs plan-verify + plan-review at this seam automatically (Orchestration concern); manual recommendation for now. -->
+<!-- The `drive` skill wires this seam automatically (runs plan-verify as a gate + plan-review as advisory) on the driver path; this manual recommendation is for standalone /devloop:plan use. plan-review stays advisory in both paths — it never gates. -->
 
 Then state the next step: `/devloop:implement <feature-name>` (or continue via the driver). Tasks
 carry `covers=[AC-ids]`, so implement and verify trace each task back to the SPEC criteria it

@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Build task in this repo? Route per docs/methodology/build-routing.md before working inline: read/trace sweeps -> dev-scout; mechanical 1-2 file edits -> dev-quick; bounded change + its tests -> dev-impl. For these shapes delegation is the default here, not a suggestion; inline only trivial known-target one-liners.'"
+          }
+        ]
+      }
+    ]
+  }
+}

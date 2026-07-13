@@ -67,5 +67,5 @@ MVP-first; each phase independently testable; implementation decisions deferred 
 - **Phase 1 — Core SDD-TDD loop (MVP).** spec, plan, implement, verify, ship skills + planner/implementer/verifier agents + tag-aware TDD hook + review skill/reviewer agent (a quality-lane slice added mid-phase — **not** in the original Phase-1 scope). One feature end-to-end per-stage. ← current
 - **Phase 2 — Orchestration + autonomy + resume.** driver, self-heal loop, PROGRESS, active pointer, atomic writes + markers, doctor + resume, fail-closed.
 - **Phase 3 — Front-end + gating.** discuss, research; triage; mid-pipeline re-gating.
-- **Phase 4 — Brownfield + multi-feature.** LEARN pass + code-graph; ROADMAP with risk/depends/Boundary; cross-feature memory; archive-on-ship; CONSTITUTION generation.
+- **Phase 4 — Brownfield + multi-feature.** LEARN pass + code-graph; ROADMAP with risk/depends/Boundary; cross-feature memory; archive-on-ship; CONSTITUTION generation. Consider an optional initiative/epic grouping (co-locating related feature specs + a sub-index between project-root ROADMAP and `specs/<slug>/`) for a single cohesive multi-feature effort.
 - **Phase 5 — Hardening.** readonly-paths + invariant hooks; ship idempotency; worktree isolation; doc-hygiene doctor; model/cost config + kill switch.

@@ -3,7 +3,9 @@
 Dev tooling for **building devloop itself**, not a product feature. Ported from the Codex
 `subagents_configs` methodology: route each task to the cheapest role + effort that reliably completes
 it. The model/effort **pin is deterministic once a subagent is dispatched**; *whether* to delegate is a
-judgment this doc guides — there is no hook enforcing it.
+judgment this doc guides. A `UserPromptSubmit` hook (`.claude/settings.json`) surfaces this rule in
+context each turn so the harness's "don't spawn agents unless asked" default doesn't silently win — but
+no hook can *force* a delegation; treat the shapes below as the default here, not a suggestion.
 
 > Separate from devloop's **product** model-routing (Phase-5 `model/cost config + kill switch`, see
 > `docs/ARCHITECTURE.md`). Don't conflate them: this lives in `.claude/` + `docs/methodology/` and

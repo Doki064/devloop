@@ -23,7 +23,8 @@ mode** below) — absent by default.
   delegates the task work to you.
 - **Resume a partial implement.** Some PLAN tasks are already committed; you continue from the next
   unstarted task (git history is the per-task record).
-  <!-- DEFERRED(Phase 2): PROGRESS.md + PreCompact checklist flush; git commits are the per-task record for now. -->
+  <!-- Resume-per-task works today off git history (the per-task record) — the resume core relies on it.
+       DEFERRED(Phase 2): PROGRESS.md (derived view) + PreCompact checklist flush — the doctor slice. -->
 
 
 ## Read your bounded working set

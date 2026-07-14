@@ -191,7 +191,9 @@ the human checkpoint (ship = PR) — counting as **neither PASS/FAIL nor BLOCK**
 <!-- DEFERRED(Phase 3): INTENT.md schema — goal + open-questions emitted by discuss; fill when the discuss stage is built. -->
 <!-- DEFERRED(Phase 3): RESEARCH.md schema — findings bounded by open-questions; fill when the research stage is built. -->
 <!-- DEFERRED(Phase 3): ASSUMPTIONS.md schema — recorded defaults/interpretations; fill when discuss/gating lands. -->
-<!-- DEFERRED(Phase 2): PROGRESS.md schema — resumable per-task state derived from git; fill when the driver/resume lands. -->
+<!-- Resume core (drive `.done` markers + `.devloop/active` + resume-entry) derives per-stage state from
+     markers + git directly — no authored PROGRESS.md needed for resume itself.
+     DEFERRED(Phase 2): PROGRESS.md schema — a *derived* human-readable per-task snapshot; fill when the doctor slice consumes it. -->
 <!-- DEFERRED(Phase 2): REVIEW.md schema — durable findings when the driver/refine loop consumes them; ephemeral returned report until then. -->
 - **INTENT.md** (ephemeral, `specs/<slug>/`) — `DEFERRED(Phase 3)`.
 - **RESEARCH.md** (ephemeral, `specs/<slug>/`) — `DEFERRED(Phase 3)`.

@@ -43,7 +43,7 @@ only what informs this feature, never the whole project:
 
 2. **Draft criteria in EARS + a check-method tag.** Phrase each requirement in EARS — the constrained,
    testable shapes (WHEN / WHILE / IF / ubiquitous / WHERE) enumerated in the EARS quick reference of
-   `${CLAUDE_PLUGIN_ROOT}/docs/ARTIFACTS.md` — and tag *how* verify confirms it: **truth** (run a
+   `${CLAUDE_SKILL_DIR}/../../docs/ARTIFACTS.md` — and tag *how* verify confirms it: **truth** (run a
    command/test), **artifact** (a file/output that must exist with real content), **link** (a
    connection that must hold, e.g. a route calls a function), **manual** (not mechanically checkable).
 
@@ -77,7 +77,7 @@ only what informs this feature, never the whole project:
 ## Output
 
 Write `specs/<slug>/SPEC.md` in the exact schema and pass its Definition of Done — both defined in
-`${CLAUDE_PLUGIN_ROOT}/docs/ARTIFACTS.md` (the SPEC.md section). That file is the single source of
+`${CLAUDE_SKILL_DIR}/../../docs/ARTIFACTS.md` (the SPEC.md section). That file is the single source of
 truth for the format; follow it rather than improvising sections.
 
 Keep it lean — a spec is a contract, not an essay. Every line must be something a verifier or

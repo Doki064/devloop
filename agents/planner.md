@@ -33,8 +33,9 @@ Read only what informs this feature — never the whole project:
 ## Write the PLAN
 
 Write `specs/<slug>/PLAN.md` in the exact schema and pass its Definition of Done — both defined in
-`${CLAUDE_PLUGIN_ROOT}/docs/ARTIFACTS.md` (the PLAN.md section). That file is the single source of
-truth for the format; follow it rather than improvising sections.
+the `ARTIFACTS.md` file whose absolute path the plan skill passes you (the PLAN.md section). That
+file is the single source of truth for the format; Read it and follow it rather than improvising
+sections.
 
 Apply these disciplines while planning:
 

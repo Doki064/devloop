@@ -23,9 +23,12 @@ never enters the judgment; only the verdict returns.
    against. (The "no implementation commits → run implement first" check for `stage=impl` lives in
    the agent, which has git; do not attempt it here.)
 
-3. **Dispatch the `verifier` agent** via Task, passing `<slug>` and `stage`. The agent reads its own
-   bounded working set and writes VERIFY.md. Do not read the PLAN or run tests in this context — let
-   the agent own that (reasoning-blindness depends on it).
+3. **Dispatch the `verifier` agent** via Task, passing `<slug>`, `stage`, **and the artifacts-spec
+   path** `${CLAUDE_SKILL_DIR}/../../docs/ARTIFACTS.md` — an agent body has no plugin-path
+   substitution of its own, so it can only reach the bundled VERIFY.md schema through the absolute
+   path you resolve here. The agent reads its own bounded working set and writes VERIFY.md. Do not
+   read the PLAN or run tests in this context — let the agent own that (reasoning-blindness depends
+   on it).
 
 4. **On return, surface the verdict.** Report the agent's summary (verdict, AC pass/fail counts, any
    BLOCK / WARN / MANUAL, test command used). A FAIL or any BLOCK is a real gate — surface it plainly,

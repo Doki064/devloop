@@ -80,8 +80,9 @@ task's `covers=`. One row per AC → covering task(s) → mapped/unmapped; **evi
 ## Write VERIFY.md
 
 Write `specs/<slug>/VERIFY.md` in the exact schema and pass its Definition of Done — both defined in
-`${CLAUDE_PLUGIN_ROOT}/docs/ARTIFACTS.md` (the VERIFY.md section). Header: `# Verify: <feature> (stage=…)`.
-That file is the single source of truth for the format; follow it rather than improvising sections.
+the `ARTIFACTS.md` file whose absolute path the verify skill passes you (the VERIFY.md section).
+Header: `# Verify: <feature> (stage=…)`. That file is the single source of truth for the format; Read
+it and follow it rather than improvising sections.
 Apply its verdict rules:
 
 - **Orphan requirement = BLOCK** — an AC covered by **no** task, **or** covered but with **no

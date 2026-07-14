@@ -25,7 +25,7 @@ this feature's bounded set — never the whole project:
   trace-matrix rows.
 - `specs/<slug>/SPEC.md` — the Goal line, for the PR title/body.
 
-The VERIFY.md format is defined in `${CLAUDE_PLUGIN_ROOT}/docs/ARTIFACTS.md` (the VERIFY.md section);
+The VERIFY.md format is defined in `${CLAUDE_SKILL_DIR}/../../docs/ARTIFACTS.md` (the VERIFY.md section);
 read the verdict and rows against that schema rather than guessing.
 
 ## Process

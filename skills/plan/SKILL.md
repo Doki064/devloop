@@ -19,9 +19,12 @@ context hygiene — the detailed reasoning stays out of this conversation; only 
 2. **Check the precondition.** Confirm `specs/<slug>/SPEC.md` exists. If it does not, stop and tell
    the user to run `/devloop:spec <feature-name>` first — plan requires a contract to plan against.
 
-3. **Dispatch the `planner` agent** via Task, passing `<slug>`. The agent reads its own bounded
-   working set (SPEC + CONSTITUTION + ROADMAP + dependency SPECs) and writes `specs/<slug>/PLAN.md`.
-   Do not read the SPEC or draft tasks in this context — let the agent own that.
+3. **Dispatch the `planner` agent** via Task, passing `<slug>` **and the artifacts-spec path**
+   `${CLAUDE_SKILL_DIR}/../../docs/ARTIFACTS.md` — an agent body has no plugin-path substitution of
+   its own, so it can only reach the bundled PLAN.md schema through the absolute path you resolve
+   here. The agent reads its own bounded working set (SPEC + CONSTITUTION + ROADMAP + dependency
+   SPECs) and writes `specs/<slug>/PLAN.md`. Do not read the SPEC or draft tasks in this context —
+   let the agent own that.
 
 4. **On return, check the result.** Confirm `specs/<slug>/PLAN.md` exists and surface the agent's
    summary (task count, tdd/standard split, any coverage gaps or risks). If the agent reported a

@@ -54,8 +54,8 @@ read the verdict and rows against that schema rather than guessing.
    <!-- DEFERRED(Phase 5): auto-create the feature branch and move commits off the default when the
         user shipped from it (the eventual product behavior); grouped with ship idempotency +
         worktree isolation. For now, refuse and let the user branch. -->
-   <!-- DEFERRED(Phase 2): dirty-tree / uncommitted-work handling is Phase-2 doctor/resume's job
-        (git push moves only commits) — do not guard it here. -->
+   <!-- dirty-tree / uncommitted-work handling lives in doctor (pre-resume, preserves the tree) — ship
+        pushes only commits, so it does not guard the working tree here. -->
 
 5. **Idempotent push.** Check for an existing PR on this branch:
    `gh pr list --head <current-branch> --json url --jq '.[0].url'`. Push the branch either way with a

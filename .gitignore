@@ -1,0 +1,2 @@
+# devloop runtime marker for the self-heal loop (ephemeral; never committed).
+.devloop/

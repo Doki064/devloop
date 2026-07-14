@@ -1,5 +1,5 @@
 {
-  "description": "devloop TDD gate — denies a git commit that skips RED (layer 2c defense-in-depth).",
+  "description": "devloop gates — TDD RED-skip gate (2c) + heal-scoped readonly path guard (self-heal safety).",
   "hooks": {
     "PreToolUse": [
       {
@@ -9,6 +9,17 @@
             "type": "command",
             "command": "node",
             "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/scripts/tdd-gate.mjs"],
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/scripts/heal-guard.mjs"],
             "timeout": 10
           }
         ]

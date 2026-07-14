@@ -80,10 +80,31 @@ could never be committed or branched from.
 
 6. **verify (impl)** — invoke the `verify` skill with `stage=impl` (the default). **This is the
    artifact gate for the implement seam**, not the implementer's word — it reasoning-blindly grades
-   real test output + git. **Gate:** `## Verdict` must be `PASS`; on `FAIL` or any BLOCK, report the
-   failing rows and stop.
-   <!-- DEFERRED(Phase 2): capped self-heal loop back to implement on FAIL + no-progress abort
-        (verify/SKILL.md:39). This stage reports and stops. -->
+   real test output + git. Read `specs/<slug>/VERIFY.md`: `## Verdict` **PASS** → the seam clears, go
+   to step 7. **FAIL or any BLOCK** → enter the **self-heal loop** (6a) instead of stopping.
+
+6a. **Self-heal loop** (replaces the Phase-1 report-and-stop). Compute the **failing set** = the
+    VERIFY.md `## Trace matrix` rows whose `result` is **not** `PASS`/`MANUAL`, plus any BLOCK rows
+    under `## Unmapped`. Then loop, **cap 3 attempts**:
+    1. **Arm the guard** — `mkdir -p .devloop && : > .devloop/heal-active` (rewrite it fresh each
+       attempt; its mtime is the guard's liveness signal). While it exists the `heal-guard` hook
+       freezes the SPEC + this feature's tests, so the re-implement can change **only code** — it
+       cannot reward-hack the reasoning-blind verifier by weakening a test.
+    2. **Re-implement in heal-mode** — invoke the `implement` skill with a **`heal`** token. The
+       implementer reads VERIFY.md's failing rows, fixes the code, and commits each fix as
+       `feat(<scope>)`. **If it returns stop-and-surface** (a failing AC has **no committed test** — a
+       coverage/plan gap it must not paper over): clear the marker (`rm -f .devloop/heal-active`) and
+       **early-exit**, reporting the gap as **re-plan territory** (distinct from a no-progress abort).
+       Do not re-verify.
+    3. **Disarm the guard** — `rm -f .devloop/heal-active`, on **every** path out of the attempt
+       (normal and error), so a later standalone `implement` never inherits a stale freeze.
+    4. **Re-verify** — invoke `verify stage=impl` again; recompute the failing set from the new
+       VERIFY.md. `## Verdict` **PASS** → healed, go to step 7. New failing set **not a strict subset**
+       of the previous (it didn't shrink) → **no-progress abort**: report the still-failing rows and
+       stop (a mixed set with one un-healable AC surfaces the whole set here — deliberate fail-closed).
+       Otherwise loop, up to the cap.
+    **Exhausted** (3 attempts, still failing) → report the remaining failing ACs + "heal exhausted",
+    stop. Always leave `.devloop/heal-active` cleared when the loop ends.
 
 7. **Commit the process artifacts** (before handing off to ship). spec/plan write inline and the
    implementer commits only code+tests, so `SPEC.md`/`PLAN.md`/`VERIFY.md` are still uncommitted —
@@ -98,12 +119,11 @@ could never be committed or branched from.
    verified and ready, and instruct: **run `/devloop:ship <feature-name>`** to push the branch and
    open the PR.
 
-**On any stage failure** (a missing artifact, a BLOCK, a FAIL, a task that won't go GREEN): report
-**which stage** stopped the run and the artifact/BLOCK rows behind it, then stop. Do **not** blind-
-retry a stage — re-running a deterministic stage on unchanged inputs just re-fails; useful retry is
-the self-heal loop (knows *what* to change), which is deferred.
-<!-- ponytail: report-and-stop, no retry. Upgrade path: the Phase-2 self-heal slice replaces the
-     verify-FAIL stop (step 6) with a capped implement→verify loop. -->
+**On any stage failure** (a missing artifact, a BLOCK, a task that won't go GREEN, or a verify FAIL the
+self-heal loop could not clear): report **which stage** stopped the run and the artifact/BLOCK/failing
+rows behind it, then stop. Do **not** blind-retry a stage — re-running a deterministic stage on
+unchanged inputs just re-fails. The one principled retry is the **self-heal loop** (step 6a): it knows
+*what* to change, is capped at 3, and aborts on no progress.
 <!-- DEFERRED(Phase 2): resume from artifacts (PROGRESS.md, .done markers, atomic writes, active
      pointer), doctor pre-resume, and fail-closed-unattended posture — drive runs the sequence once,
      start to finish, and each stage self-protects its own precondition. -->

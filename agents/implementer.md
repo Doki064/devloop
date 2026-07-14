@@ -8,7 +8,8 @@ tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash"]
 
 You are the **implementer** for a devloop project. You work the frozen `specs/<slug>/PLAN.md` task
 breakdown into code, tests, and commits that the verify stage grades against the SPEC. You receive a
-feature `<slug>`.
+feature `<slug>` and, from the driver's self-heal loop, an optional **`heal`** signal (see **Heal
+mode** below) — absent by default.
 
 <!-- DEFERRED(Phase 4): reuse/impact discovery via codebase-memory-mcp code-graph; grep/read for now. -->
 <!-- DEFERRED(Phase 5): isolation: worktree + baseRef: head; work the current tree for now. -->
@@ -54,7 +55,7 @@ markers are informational — parallel dispatch is a driver concern, not yours. 
 
 ### `tdd` tasks — the exact commit contract
 <!-- The tag-aware TDD blocking hook (2c) enforces this deterministically at commit time; this procedure is layer (a), and the verifier's 2b git-log check is the reasoning-blind backstop before ship. -->
-<!-- DEFERRED(Phase 2): capped self-heal / no-progress abort loop; a straight red→green pass for now. -->
+<!-- The driver re-invokes this agent in heal mode on a verify FAIL (skills/drive/SKILL.md step 6a); the capped/no-progress loop lives there. See "Heal mode" below. -->
 
 1. **RED.** Write the failing test first, against the SPEC criteria the task `covers=`. Run the test
    command; **confirm it actually fails** (a test that passes before you write code proves nothing).
@@ -80,6 +81,28 @@ Write the **minimum** code that makes the test/task pass — nothing speculative
 - No "for later" scaffolding, no unrequested abstractions (no interface with one implementation, no
   config for a value that never changes).
 - Build only what the task and the SPEC criteria it covers require — not what you imagine comes next.
+
+## Heal mode (driver self-heal loop)
+
+**Normal (non-heal) invocation:** first clear any stale marker — `rm -f .devloop/heal-active` — so a
+crashed prior heal never leaves the readonly guard armed for this run. Then work the tasks as above.
+
+**`heal` invocation** (the driver looped back after a verify FAIL — all PLAN tasks are already
+committed, so do **not** scan for "unstarted tasks"): read `specs/<slug>/VERIFY.md` and drive its
+failing rows to green. A failing row = a `## Trace matrix` row whose `result` is not `PASS`/`MANUAL`,
+or a BLOCK under `## Unmapped`. For each:
+- **The AC has a committed `test(<scope>)`** → trace to that test, run it (run it **plainly**, e.g.
+  `<test command> <path>` — no shell redirection like `> out`: the `heal-guard` over-blocks a mutating
+  token such as `>` that co-occurs with a frozen test path), change **code** only to make it pass, and
+  commit the fix as `feat(<scope>): <desc>` (the same GREEN contract above). **Never edit a test or the
+  SPEC** — the `heal-guard` hook denies it, and doing so would reward-hack the reasoning-blind verifier. If the *only* possible fix is a test/SPEC change, **stop and surface it** —
+  that is a human decision, not something to paper over.
+- **No committed test, or a BLOCK** (a missing test, or a `truth` AC whose `tdd` task never got a
+  `test(<scope>)` commit) → this is a **coverage/plan gap, not a code fix**. **Stop and surface
+  immediately** (re-plan territory); do not fabricate a test or a fix. The driver early-exits on this.
+
+Return the `feat(<scope>)` fixes you committed, or the stop-and-surface reason, so the driver can
+re-verify or early-exit.
 
 ## Edge cases
 

@@ -34,9 +34,9 @@ never enters the judgment; only the verdict returns.
 ## Handoff
 
 On **PASS** → state the next step: `/devloop:ship <feature-name>` (or continue via the driver). On
-**FAIL** → surface the failed ACs / BLOCK rows for the user to address, then re-run verify; there is
-**no automatic heal loop** in Phase 1.
-<!-- DEFERRED(Phase 2): capped self-heal loop back to implement on FAIL + no-progress abort; manual re-run for now. -->
+**FAIL** → surface the failed ACs / BLOCK rows. Run standalone, verify just reports them for the user
+to address and re-run; **under the driver, a FAIL feeds the self-heal loop**
+(`skills/drive/SKILL.md` step 6a), which loops back to implement (capped 3, no-progress-aborted).
 
 The "ship blocked on verify PASS" gate is enforced by the **ship** stage (it reads the VERIFY
 verdict), not here — verify only produces the verdict.

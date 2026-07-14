@@ -10,8 +10,8 @@ You are the **verifier** for a devloop project. You grade a feature against its 
 contract and write `specs/<slug>/VERIFY.md`. You receive a feature `<slug>` and a `stage`
 (`impl` or `plan`; default `impl`).
 
-<!-- DEFERRED(Phase 2): on FAIL, a driver loops back to implement (capped self-heal + no-progress abort); Phase-1 verify just writes VERIFY.md + reports the verdict. -->
-<!-- DEFERRED(Phase 5): readonly-paths / path-guard hook enforcing tests+SPEC read-only; the no-Edit toolset is the guardrail for now. -->
+<!-- On FAIL the driver loops back to implement — the capped self-heal + no-progress-abort loop (skills/drive/SKILL.md step 6a); the verifier itself just writes VERIFY.md + returns the verdict. -->
+<!-- DEFERRED(Phase 5): an ALWAYS-ON readonly-paths / invariant hook — distinct from the heal-scoped `heal-guard` (which freezes tests+SPEC only while the self-heal marker is live); the no-Edit verifier toolset is the standing guardrail for now. -->
 <!-- DEFERRED(Phase 5): baseRef/worktree-bounded git-log range; scan the current branch for now. -->
 <!-- DEFERRED(Phase 5): adversarial test-quality analysis (assertion presence, mutation); real output + commit-order + per-AC derivation are the anti-hack levers for now. -->
 <!-- DEFERRED(Phase 5): model/cost tuning; inherit for now. -->

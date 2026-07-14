@@ -14,14 +14,17 @@ hygiene — the detailed edit-by-edit reasoning stays out of this conversation; 
 
 ## Process
 
-1. **Slugify** the feature name you were given (lowercase, hyphens) → `<slug>`.
+1. **Slugify** the feature name you were given (lowercase, hyphens) → `<slug>`. Parse an optional
+   **`heal`** token from the arguments (the driver's self-heal loop passes it after a verify FAIL);
+   absent by default → a normal implement.
 
 2. **Check the precondition.** Confirm `specs/<slug>/PLAN.md` exists. If it does not, stop and tell
    the user to run `/devloop:plan <feature-name>` first — implement needs a task plan to work from.
 
-3. **Dispatch the `implementer` agent** via Task, passing `<slug>`. The agent reads its own bounded
-   working set (PLAN + the SPEC criteria each task covers + the code it touches) and writes code,
-   tests, and commits. Do not read the PLAN or write code in this context — let the agent own that.
+3. **Dispatch the `implementer` agent** via Task, passing `<slug>` **and the `heal` token if present**.
+   The agent reads its own bounded working set (PLAN + the SPEC criteria each task covers + the code it
+   touches — plus `VERIFY.md` in heal mode) and writes code, tests, and commits. Do not read the PLAN
+   or write code in this context — let the agent own that.
    <!-- DEFERRED(Phase 5): isolation: worktree + baseRef: head; implement on the current tree for now. -->
 
 4. **On return, check the result.** Surface the agent's summary (tasks completed, tdd/standard split,

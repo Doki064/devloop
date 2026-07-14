@@ -9,7 +9,8 @@ allowed-tools:
 # review — advisory quality lane (reads & judges)
 
 This is a **thin** stage: it delegates the real work to the `reviewer` agent, which reads its own
-bounded set (`specs/<slug>/` + the feature's changed code) and returns terse one-line findings.
+bounded set (`specs/<slug>/` + the feature's changed code), writes durable findings to
+`specs/<slug>/REVIEW.md`, and returns the same terse one-line findings.
 `review` is the **deliberate inverse of the reasoning-blind verifier** — it *reads and judges*
 whether the plan and code are well-shaped: simple, secure, idiomatic, not over-engineered, not
 drifting from SPEC intent.
@@ -30,13 +31,16 @@ never present them as a blocker, never let them touch the verify verdict.
    the agent, which has git; do not attempt it here.)
 
 3. **Dispatch the `reviewer` agent** via Task, passing `<slug>` and `target`. The agent reads its own
-   bounded working set and returns findings. Do not read the PLAN or the diff in this context — let
-   the agent own that (context hygiene; the critique stays out of this conversation).
+   bounded working set, writes `specs/<slug>/REVIEW.md`, and returns findings. Do not read the PLAN or
+   the diff in this context — let the agent own that (context hygiene; the critique stays out of this
+   conversation).
 
 4. **On return, surface the findings.** Report the agent's one-line findings and summary **as
    advisory input** — most-severe first, `Clean. Nothing to flag.` when empty. Never call them a gate,
    never block on them: a concern becomes a gate only by being made mechanical (promoted to a
-   falsifiable SPEC `AC-N` that verify grades, or a hook that denies).
+   falsifiable SPEC `AC-N` that verify grades, or a hook that denies). The durable record is
+   `specs/<slug>/REVIEW.md` (schema in `${CLAUDE_PLUGIN_ROOT}/docs/ARTIFACTS.md`); the driver's
+   plan-review→re-plan loop reads its finding count, never a verdict.
 
 ## Handoff
 
@@ -47,4 +51,3 @@ run this alongside the mechanical `/devloop:verify <feature-name> stage=plan` co
 On **`target=impl`** → this is a quality pass before `/devloop:ship <feature-name>`; address findings
 at your discretion. The PR is the human checkpoint; review never blocks the ship — the `impl-verify`
 PASS is the only gate there.
-<!-- DEFERRED(Phase 2): durable REVIEW.md + driver-run findings→re-plan loop; ephemeral returned findings for now. -->

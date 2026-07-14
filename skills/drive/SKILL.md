@@ -106,18 +106,33 @@ is a cheap secondary guard for the case doctor was unavailable or degraded). Do 
    `specs/<slug>/PLAN.md` exists. The planner's own coverage-gap self-report is an early-exit hint;
    the **mechanical** plan gate is plan-verify (step 4).
 
-4. **plan→implement seam** (the wiring this stage adds). Run **both**:
-   - `verify` skill with `stage=plan` — the mechanical coverage check. **This gates:** an
-     orphan-requirement / coverage BLOCK stops the run **before implement**. Surface the BLOCK rows.
-     **Only when plan-verify PASSes (no BLOCK), drop the marker:** `date -u +%Y-%m-%dT%H:%M:%SZ | node
-     ${CLAUDE_PLUGIN_ROOT}/scripts/atomic-write.mjs specs/<slug>/plan.done --once` (nonzero →
-     warn). The marker means *plan stage cleared incl. its gate* — so a BLOCK leaves `plan.done` absent
-     and a later resume re-enters at plan, never skipping into implement over a live coverage BLOCK.
-   - `review` skill with `target=plan` — advisory. **Surface** the one-line findings, then
-     **continue regardless** — review never gates (a concern becomes a gate only by being made
-     mechanical). Do not loop back to re-plan on findings.
-     <!-- DEFERRED(Phase 2): plan-review findings → re-plan loop (review/SKILL.md:50). This stage
-          surfaces findings and continues; it does not loop. -->
+4. **plan→implement seam** (the wiring this stage adds) — a **convergence-terminated re-plan loop**
+   wrapping the mechanical plan-verify gate and the advisory plan-review. Track `prev_count = -1` as loop
+   state. Each iteration:
+   1. **plan-verify** — `verify` skill with `stage=plan`, the mechanical coverage check. **This gates:**
+      an orphan-requirement / coverage BLOCK stops the run **before implement** — surface the BLOCK rows
+      and stop. Do **not** drop `plan.done` here (see the terminal below): a per-iteration drop on PASS
+      would let a *later* re-plan's coverage BLOCK be skipped on resume.
+   2. **plan-review** — `review` skill with `target=plan`, advisory. The reviewer writes
+      `specs/<slug>/REVIEW.md` and returns findings; **surface** the one-line findings (never a blocker).
+   3. **Decide** — `node ${CLAUDE_PLUGIN_ROOT}/scripts/replan-decision.mjs specs/<slug>/REVIEW.md
+      <prev_count>` prints one line (it re-plans only while the finding count *strictly shrinks*, which
+      bounds the loop structurally — no fixed cap):
+      - `replan <count>` → set `prev_count = <count>`, invoke the `plan` skill with a **`replan`** token
+        (the planner reads REVIEW.md and revises PLAN.md to resolve the findings), then **loop back to
+        sub-step 1** — the new plan is re-verified, so a re-plan-introduced BLOCK is caught next iteration.
+      - `continue 0 no-review` → REVIEW.md is **absent** (the reviewer failed to write it; count is
+        always 0 here). Warn `review produced no REVIEW.md; continuing` and fall through to the terminal —
+        advisory, never blocks.
+      - `continue <count> clean|no-progress` → fall through to the terminal (findings converged, or the
+        set stopped shrinking; either way review is advisory, so **continue to implement**, never stop —
+        the deliberate inverse of the self-heal loop's fail-closed exhaustion in step 6a).
+   **Loop terminal (any `continue`).** A `continue` is only reachable *after* this iteration's plan-verify
+   PASS (a BLOCK stops the loop above), so the plan stage has cleared its gate. **Drop the marker now:**
+   `date -u +%Y-%m-%dT%H:%M:%SZ | node ${CLAUDE_PLUGIN_ROOT}/scripts/atomic-write.mjs specs/<slug>/plan.done
+   --once` (nonzero → warn). The marker means *plan stage cleared incl. its gate*; dropping it only here
+   (never on a per-iteration PASS) keeps a resume from skipping into implement over a re-plan's live BLOCK.
+   Any findings still present are advisory (surfaced + in REVIEW.md) — they never block the seam.
 
 5. **implement** — invoke the `implement` skill (Skill tool) with the feature name. If the
    implementer reports a task it could **not** drive to GREEN (or a test command that errors),
@@ -185,8 +200,11 @@ is a cheap secondary guard for the case doctor was unavailable or degraded). Do 
 **On any stage failure** (a missing artifact, a BLOCK, a task that won't go GREEN, or a verify FAIL the
 self-heal loop could not clear): report **which stage** stopped the run and the artifact/BLOCK/failing
 rows behind it, then stop. Do **not** blind-retry a stage — re-running a deterministic stage on
-unchanged inputs just re-fails. The one principled retry is the **self-heal loop** (step 6a): it knows
-*what* to change, is capped at 3, and aborts on no progress.
+*unchanged* inputs just re-fails. The two principled retries both re-run on *changed* inputs and are
+bounded with a no-progress abort: the **re-plan loop** (step 4, re-runs plan on revised REVIEW.md
+findings, bounded by strict finding-count decrease — advisory, so it *continues* on no-progress) and the
+**self-heal loop** (step 6a, re-implements from VERIFY.md failing rows, capped at 3 — a gate, so it
+*stops* on no-progress). Everything else fails closed rather than blind-retrying.
 <!-- Resume core + doctor built: `.done` markers (atomic write via scripts/atomic-write.mjs),
      `.devloop/active` pointer, resume-entry, fail-closed on inconsistent state, and the pre-resume doctor
      (marker/artifact consistency + safe-fix, dirty-tree preserve + fail-closed-unattended, git hygiene).

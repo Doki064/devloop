@@ -81,7 +81,10 @@ un-bootstrapped→STOP survived four reading reviews and only broke when execute
 ## Reflexes that make it work (the invariants under the steps)
 - **Live source > snapshot > memory.** Re-derive state; never trust a cached claim about it.
 - **Fold findings, then re-validate — refinement introduces new staleness.** Every edit pass can rot a
-  premise; after folding, re-read for what the edits broke.
+  premise; after folding, re-read for what the edits broke — and when the fold *materially rewrites
+  logic* (not just wording), re-run the **fresh** reviewer, not just a self re-read: the re-read shares
+  the blind spot that wrote the fold (a `process.cwd()` "fix" that re-opened the very bypass it closed
+  survived self-review, and only a fresh pass caught it).
 - **Deliberate ≠ accidental.** A gap the artifact explicitly justifies (a marker, an out-of-scope note)
   is not a finding. Don't flag reasoned simplifications; do flag silent ones.
 - **Keep the plan lean (prune test) but review-ready.** Enough that a build can be graded against it;

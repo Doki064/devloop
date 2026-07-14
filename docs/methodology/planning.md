@@ -75,6 +75,10 @@ dirty tree, path separators), *run that branch logic in isolation against each c
 review-ready* — do not settle for another read. A reading review ratifies a plausible-but-wrong
 classification: a plan that lumped "no remote" together with "no base branch" into one
 un-bootstrapped→STOP survived four reading reviews and only broke when executed on a real local repo.
+**But isolation alone is a trap when the feature's own outputs feed the signal:** also run the case
+where the feature's *own* artifacts generate the environmental state — a dirty-tree check tripped by
+the very untracked markers the pipeline drops — which a synthetic isolated fixture (a lone `dirty.txt`)
+sails past; only a run where the system's own state produces the signal exposes it.
 
 ---
 

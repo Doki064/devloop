@@ -43,9 +43,19 @@ could never be committed or branched from.
 **Mark the active feature** (so a later doctor/resume knows what's mid-flight — machine state, `.devloop/`
 is gitignored): `printf '%s' <slug> | node ${CLAUDE_PLUGIN_ROOT}/scripts/atomic-write.mjs
 .devloop/active` (overwrite; **no** `--once`). A nonzero exit is a **warning, not a stop** — the pointer
-only aids the next-slice doctor; this run reads markers directly. `${CLAUDE_PLUGIN_ROOT}` resolves to the
-plugin dir (the plugin-wide convention), so the shared `scripts/atomic-write.mjs` is reachable from any
-target project.
+aids the pre-resume doctor (below) and a later resume; this run reads markers directly.
+`${CLAUDE_PLUGIN_ROOT}` resolves to the plugin dir (the plugin-wide convention), so the shared
+`scripts/atomic-write.mjs` is reachable from any target project.
+
+**Pre-resume health check (doctor).** If **any** `specs/<slug>/*.done` marker exists — i.e. this is a
+resume; a fresh run has none, so it pays nothing — invoke the `doctor` skill (Skill tool) with the slug,
+`--mode auto --fix`, **before** computing entry. doctor reasoning-blindly checks the resume-core state
+(marker/artifact consistency, dirty tree, git hygiene) and applies only work-safe fixes (deletes an
+orphaned marker, clears a stale pointer — it **preserves** a dirty tree, never discards):
+- **`CLEAN`/`ISSUES`** (any safe fixes applied) → continue; compute entry against the now-consistent state.
+- **`BLOCK`** → **STOP** and surface doctor's reason (a dirty tree to commit/stash, committed `.done`
+  markers to gitignore, or an inconsistency it could not safely repair). Do not resume over a `BLOCK` —
+  this is the self-heal-or-fail-closed boundary the raw fail-closed check below used to dead-end at.
 
 **Resume entry — skip stages already completed.** drive is resumable by re-invocation: a run cut short
 (context limit, Ctrl-C, crash) is continued by running `/devloop <feature>` again. Each stage drops a
@@ -66,8 +76,8 @@ stage, confirm its artifact is still on disk — applied *uniformly* by entry po
 
 Any required upstream artifact missing while its `.done` marker is present → **STOP**: `inconsistent
 resume state: <file> is missing but <stage>.done is present. Delete specs/<slug>/<stage>.done to force a
-clean re-run` (doctor, which will diagnose this automatically, lands in a later Phase-2 slice). Do not
-guess; do not proceed.
+clean re-run` (the pre-resume doctor above normally repairs this by deleting the orphaned marker — this
+is a cheap secondary guard for the case doctor was unavailable or degraded). Do not guess; do not proceed.
 
 1. **spec** — invoke the `spec` skill (Skill tool) with the feature name. spec is interactive; its
    questions surface normally here. **Gate:** confirm `specs/<slug>/SPEC.md` exists (Glob). If not,
@@ -164,7 +174,8 @@ guess; do not proceed.
    this idempotent (a resume that re-enters here with nothing new to commit is a no-op, not a `git
    commit` error). Use a **`docs(` type, never `feat(`** — the TDD hook only scrutinizes `feat(<scope>):`
    subjects. (This runs *after* verify so it never pollutes the verifier's git-log TDD-pair scan.)
-   *(The target project should gitignore `specs/**/*.done`; a doctor/init-slice concern — not wired here.)*
+   *(The target project should gitignore `specs/**/*.done`; doctor flags committed markers as a git-hygiene
+   finding, but writing the gitignore entry stays an init-slice concern — not wired here.)*
 
 8. **Stop at the ship boundary.** Do **not** invoke ship — it is `disable-model-invocation` by
    design (pushing the branch + opening the PR is the human checkpoint). Report that the feature is
@@ -176,10 +187,11 @@ self-heal loop could not clear): report **which stage** stopped the run and the 
 rows behind it, then stop. Do **not** blind-retry a stage — re-running a deterministic stage on
 unchanged inputs just re-fails. The one principled retry is the **self-heal loop** (step 6a): it knows
 *what* to change, is capped at 3, and aborts on no progress.
-<!-- Resume core built: `.done` markers (atomic write via scripts/atomic-write.mjs), `.devloop/active`
-     pointer, resume-entry (skip completed stages), fail-closed on inconsistent state.
-     DEFERRED(Phase 2): PROGRESS.md (derived), PreCompact checklist flush, doctor pre-resume, and the
-     dirty-tree / attended-vs-unattended posture — the doctor slice. -->
+<!-- Resume core + doctor built: `.done` markers (atomic write via scripts/atomic-write.mjs),
+     `.devloop/active` pointer, resume-entry, fail-closed on inconsistent state, and the pre-resume doctor
+     (marker/artifact consistency + safe-fix, dirty-tree preserve + fail-closed-unattended, git hygiene).
+     DEFERRED(Phase 5): PROGRESS.md (a derived per-task snapshot) + PreCompact checklist flush — polish
+     over an already-working git-based resume; no consumer yet. -->
 
 ## Handoff
 

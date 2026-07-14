@@ -73,7 +73,9 @@ Run every landed slice against these; headline findings tend to come from here:
   the false-denies the whole component is designed to avoid.) Root-cause, least-risk.
 - **Know the fail direction and weigh findings by it.** A fail-open *miss* (a backstop catches it) is
   categorically less severe than a false-*deny* (blocks legit work) — and a gate that ships *unverified*
-  code is worse than one that over-asks. Judge accordingly.
+  code is worse than one that over-asks. Judge accordingly. In a **resumable** pipeline, "work-safe"
+  means safe for *progress* too: an auto-fix that loses no committed bytes but discards resume state —
+  re-running a completed, maybe interactive, stage — is a real cost, not a free cleanup.
 - **Two passes, genuinely.** Pass 1 confirms it's well-formed; Pass 2 is where the substantive findings
   come from. A one-pass review passes every slice as "clean."
 - **Report non-bugs too.** Recording "this looks wrong but is right, and here's why the validator is
@@ -83,9 +85,13 @@ Run every landed slice against these; headline findings tend to come from here:
   never take the PR.
 
 ## What NOT to do
-- Don't spawn review subagents for the reading/analysis — do it inline with your own tools (the
-  `skill-reviewer`/`plugin-validator` dispatches are only for the *validate-after-edit* step, the
-  project's sanctioned tooling). Don't re-derive context a fresh agent would cold-start.
+- Don't spawn review subagents for the reading/analysis **when your context is already fresh** — a new
+  session, or a slice that landed from elsewhere — do it inline with your own tools; a fresh agent would
+  only cold-start the context you already hold. **But when you *built* this slice in the same session,
+  inline review shares the build's blind spots — then dispatch a fresh-context reviewer for the analysis
+  (as the planning methodology does) and apply/revalidate/commit the fixes yourself.** The freshness is
+  what matters, not the agent boundary. The `skill-reviewer`/`plugin-validator` dispatches stay only for
+  the *validate-after-edit* step (the project's sanctioned tooling).
 - Don't inflate severity or manufacture findings. Don't fix polish that triggers a mandatory
   re-validation for a marginal wording gain.
 - Don't edit finalized ARCHITECTURE to resolve drift without surfacing it.

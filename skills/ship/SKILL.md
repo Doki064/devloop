@@ -72,10 +72,15 @@ read the verdict and rows against that schema rather than guessing.
      - a `## Manual checks` checklist of the `MANUAL` named-hole rows (omit the section if none);
      - a link to `specs/<slug>/SPEC.md`.
 
+7. **Mark shipped + clear the active pointer** (only after the push/PR of step 5–6 succeeds — a failed
+   push must not look shipped). Drop the terminal marker and retire the in-flight pointer so a later
+   doctor/resume sees this feature as done, not mid-flight:
+   `date -u +%Y-%m-%dT%H:%M:%SZ | node ${CLAUDE_PLUGIN_ROOT}/scripts/atomic-write.mjs
+   specs/<slug>/ship.done --once` and `rm -f .devloop/active`. Both are best-effort — a nonzero exit is
+   a **warning, not a failure** (the PR is already open; markers are only resume hints).
+
 <!-- DEFERRED(Phase 4): archive this feature's ephemeral artifacts (PLAN/VERIFY/…) on successful
      ship; archival machinery is a Phase-4 concern. -->
-<!-- DEFERRED(Phase 2): drop a rename-last `.done` marker via atomic write once the marker/resume
-     plumbing lands. -->
 
 ## Handoff
 

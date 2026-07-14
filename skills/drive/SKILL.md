@@ -40,9 +40,41 @@ scope) and drive needs a base commit to branch from. This runs *before* the inte
 so an empty repo fails fast, instead of dragging the user through a spec session whose `SPEC.md`
 could never be committed or branched from.
 
+**Mark the active feature** (so a later doctor/resume knows what's mid-flight — machine state, `.devloop/`
+is gitignored): `printf '%s' <slug> | node ${CLAUDE_PLUGIN_ROOT}/scripts/atomic-write.mjs
+.devloop/active` (overwrite; **no** `--once`). A nonzero exit is a **warning, not a stop** — the pointer
+only aids the next-slice doctor; this run reads markers directly. `${CLAUDE_PLUGIN_ROOT}` resolves to the
+plugin dir (the plugin-wide convention), so the shared `scripts/atomic-write.mjs` is reachable from any
+target project.
+
+**Resume entry — skip stages already completed.** drive is resumable by re-invocation: a run cut short
+(context limit, Ctrl-C, crash) is continued by running `/devloop <feature>` again. Each stage drops a
+write-once `specs/<slug>/<stage>.done` marker (via the same helper) as its gate clears. Compute
+**entry = the first of [spec, plan, implement] whose `.done` marker is absent** (all three present →
+enter at step 6 to reconfirm), then **skip only the stages strictly before `entry` and run `entry`
+onward** — `entry` is the sole governing rule. Do **not** skip a later stage just because its marker
+happens to be present: markers are best-effort, so a lost earlier marker can leave a non-monotonic set
+(e.g. `spec.done` missing but `plan.done` present); re-running from `entry` regenerates the downstream
+artifacts and never runs a stage against a now-stale upstream one. **The precondition above and step 2
+(feature branch) always run regardless of entry** — they are idempotent and every downstream stage
+needs the branch.
+
+**Fail-closed on inconsistent state (never skip into a missing artifact).** Before skipping a completed
+stage, confirm its artifact is still on disk — applied *uniformly* by entry point:
+- entry ≥ plan ⇒ `specs/<slug>/SPEC.md` must exist.
+- entry ≥ implement (incl. all-present) ⇒ `SPEC.md` **and** `PLAN.md` must exist.
+
+Any required upstream artifact missing while its `.done` marker is present → **STOP**: `inconsistent
+resume state: <file> is missing but <stage>.done is present. Delete specs/<slug>/<stage>.done to force a
+clean re-run` (doctor, which will diagnose this automatically, lands in a later Phase-2 slice). Do not
+guess; do not proceed.
+
 1. **spec** — invoke the `spec` skill (Skill tool) with the feature name. spec is interactive; its
    questions surface normally here. **Gate:** confirm `specs/<slug>/SPEC.md` exists (Glob). If not,
-   stop and report — spec did not produce a contract.
+   stop and report — spec did not produce a contract. **On pass, drop the marker:** `date -u
+   +%Y-%m-%dT%H:%M:%SZ | node ${CLAUDE_PLUGIN_ROOT}/scripts/atomic-write.mjs
+   specs/<slug>/spec.done --once` (nonzero exit → warn, don't stop — a lost marker only re-runs spec
+   next resume). *(Skipped entirely when resuming past spec.)*
 
 2. **Feature branch** (must precede any implement commit). Move off the base branch so implement's
    commits don't land on it (else ship later refuses and the run yields no PR). A base commit is
@@ -67,6 +99,10 @@ could never be committed or branched from.
 4. **plan→implement seam** (the wiring this stage adds). Run **both**:
    - `verify` skill with `stage=plan` — the mechanical coverage check. **This gates:** an
      orphan-requirement / coverage BLOCK stops the run **before implement**. Surface the BLOCK rows.
+     **Only when plan-verify PASSes (no BLOCK), drop the marker:** `date -u +%Y-%m-%dT%H:%M:%SZ | node
+     ${CLAUDE_PLUGIN_ROOT}/scripts/atomic-write.mjs specs/<slug>/plan.done --once` (nonzero →
+     warn). The marker means *plan stage cleared incl. its gate* — so a BLOCK leaves `plan.done` absent
+     and a later resume re-enters at plan, never skipping into implement over a live coverage BLOCK.
    - `review` skill with `target=plan` — advisory. **Surface** the one-line findings, then
      **continue regardless** — review never gates (a concern becomes a gate only by being made
      mechanical). Do not loop back to re-plan on findings.
@@ -80,8 +116,19 @@ could never be committed or branched from.
 
 6. **verify (impl)** — invoke the `verify` skill with `stage=impl` (the default). **This is the
    artifact gate for the implement seam**, not the implementer's word — it reasoning-blindly grades
-   real test output + git. Read `specs/<slug>/VERIFY.md`: `## Verdict` **PASS** → the seam clears, go
-   to step 7. **FAIL or any BLOCK** → enter the **self-heal loop** (6a) instead of stopping.
+   real test output + git. Read `specs/<slug>/VERIFY.md`: `## Verdict` **PASS** → the seam clears; **drop
+   the marker** `date -u +%Y-%m-%dT%H:%M:%SZ | node ${CLAUDE_PLUGIN_ROOT}/scripts/atomic-write.mjs
+   specs/<slug>/implement.done --once` (nonzero → warn), then go to step 7. The marker lands on verify
+   PASS, not on the implementer returning — implement isn't "done" until GREEN.
+   **On FAIL or any BLOCK**, branch on how this run reached step 6:
+   - **Resumed with `implement.done` already present** (entered here without running implement this
+     invocation): this is a **regression** — the marker asserts the feature *was* GREEN, so a FAIL is a
+     broken premise, not a fresh failure. **STOP** (fail-closed): `previously-completed feature now fails
+     verify — state changed under resume; inspect, or delete specs/<slug>/implement.done to re-heal`. Do
+     **not** silently re-enter the heal loop (auto-healing would misreport a lost-commits regression as a
+     re-plan coverage gap).
+   - **Otherwise** (implement ran this invocation, `implement.done` absent) → enter the **self-heal
+     loop** (6a). Implement is not yet done, so a FAIL is a fresh failure to heal.
 
 6a. **Self-heal loop** (replaces the Phase-1 report-and-stop). Compute the **failing set** = the
     VERIFY.md `## Trace matrix` rows whose `result` is **not** `PASS`/`MANUAL`, plus any BLOCK rows
@@ -99,7 +146,8 @@ could never be committed or branched from.
     3. **Disarm the guard** — `rm -f .devloop/heal-active`, on **every** path out of the attempt
        (normal and error), so a later standalone `implement` never inherits a stale freeze.
     4. **Re-verify** — invoke `verify stage=impl` again; recompute the failing set from the new
-       VERIFY.md. `## Verdict` **PASS** → healed, go to step 7. New failing set **not a strict subset**
+       VERIFY.md. `## Verdict` **PASS** → healed; **drop `implement.done`** (same command as step 6),
+       then go to step 7. New failing set **not a strict subset**
        of the previous (it didn't shrink) → **no-progress abort**: report the still-failing rows and
        stop (a mixed set with one un-healable AC surfaces the whole set here — deliberate fail-closed).
        Otherwise loop, up to the cap.
@@ -109,10 +157,14 @@ could never be committed or branched from.
 7. **Commit the process artifacts** (before handing off to ship). spec/plan write inline and the
    implementer commits only code+tests, so `SPEC.md`/`PLAN.md`/`VERIFY.md` are still uncommitted —
    ship's PR body links to `specs/<slug>/SPEC.md`, which must be in git history to resolve. Commit
-   them onto the feature branch: `git add specs/<slug> && git commit -m "docs(<slug>): pipeline
-   artifacts"`. Use a **`docs(` type, never `feat(`** — the TDD hook only scrutinizes
-   `feat(<scope>):` subjects. (This runs *after* verify so it never pollutes the verifier's
-   git-log TDD-pair scan.)
+   them onto the feature branch — **scope the add to the `.md` artifacts, never `git add specs/<slug>`**,
+   so the `*.done` resume markers (machine-local skip-hints) are not swept into git history where a clone
+   would see them and skip stages it never ran: `git add specs/<slug>/*.md && git diff --cached --quiet
+   || git commit -m "docs(<slug>): pipeline artifacts"`. The `git diff --cached --quiet ||` guard makes
+   this idempotent (a resume that re-enters here with nothing new to commit is a no-op, not a `git
+   commit` error). Use a **`docs(` type, never `feat(`** — the TDD hook only scrutinizes `feat(<scope>):`
+   subjects. (This runs *after* verify so it never pollutes the verifier's git-log TDD-pair scan.)
+   *(The target project should gitignore `specs/**/*.done`; a doctor/init-slice concern — not wired here.)*
 
 8. **Stop at the ship boundary.** Do **not** invoke ship — it is `disable-model-invocation` by
    design (pushing the branch + opening the PR is the human checkpoint). Report that the feature is
@@ -124,9 +176,10 @@ self-heal loop could not clear): report **which stage** stopped the run and the 
 rows behind it, then stop. Do **not** blind-retry a stage — re-running a deterministic stage on
 unchanged inputs just re-fails. The one principled retry is the **self-heal loop** (step 6a): it knows
 *what* to change, is capped at 3, and aborts on no progress.
-<!-- DEFERRED(Phase 2): resume from artifacts (PROGRESS.md, .done markers, atomic writes, active
-     pointer), doctor pre-resume, and fail-closed-unattended posture — drive runs the sequence once,
-     start to finish, and each stage self-protects its own precondition. -->
+<!-- Resume core built: `.done` markers (atomic write via scripts/atomic-write.mjs), `.devloop/active`
+     pointer, resume-entry (skip completed stages), fail-closed on inconsistent state.
+     DEFERRED(Phase 2): PROGRESS.md (derived), PreCompact checklist flush, doctor pre-resume, and the
+     dirty-tree / attended-vs-unattended posture — the doctor slice. -->
 
 ## Handoff
 

@@ -14,14 +14,17 @@ context hygiene — the detailed reasoning stays out of this conversation; only 
 
 ## Process
 
-1. **Slugify** the feature name you were given (lowercase, hyphens) → `<slug>`.
+1. **Slugify** the feature name you were given (lowercase, hyphens) → `<slug>`. Parse an optional
+   **`replan`** token from the arguments (the driver's plan-review→re-plan loop passes it when
+   REVIEW.md findings warrant a revised plan); absent by default → a normal first plan.
 
 2. **Check the precondition.** Confirm `specs/<slug>/SPEC.md` exists. If it does not, stop and tell
    the user to run `/devloop:spec <feature-name>` first — plan requires a contract to plan against.
 
-3. **Dispatch the `planner` agent** via Task, passing `<slug>`. The agent reads its own bounded
-   working set (SPEC + CONSTITUTION + ROADMAP + dependency SPECs) and writes `specs/<slug>/PLAN.md`.
-   Do not read the SPEC or draft tasks in this context — let the agent own that.
+3. **Dispatch the `planner` agent** via Task, passing `<slug>` **and the `replan` token if present**.
+   The agent reads its own bounded working set (SPEC + CONSTITUTION + ROADMAP + dependency SPECs — plus
+   `REVIEW.md` in re-plan mode) and writes `specs/<slug>/PLAN.md`. Do not read the SPEC or draft tasks
+   in this context — let the agent own that.
 
 4. **On return, check the result.** Confirm `specs/<slug>/PLAN.md` exists and surface the agent's
    summary (task count, tdd/standard split, any coverage gaps or risks). If the agent reported a

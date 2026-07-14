@@ -38,7 +38,7 @@ ones, re-validation, focused commits, memory update — and **PR-to-main left to
 6. **Re-validate every edited file** (the revalidate-after-edit rule): SKILL.md → `skill-reviewer`;
    agent/command/manifest/structure → `plugin-validator`; code → its own test suite. Non-negotiable.
 7. **Commit as focused, logically-separate changesets** (build vs review-fix stay distinct), clear
-   messages, end with `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
+   messages (the harness supplies the Co-Authored-By trailer — never pin a model name here).
 8. **Update the project memory notes**; **surface the PR-to-main decision, never take it.**
 
 ## Where the real findings hide — a cross-seam checklist
@@ -53,7 +53,7 @@ Run every landed slice against these; headline findings tend to come from here:
 - **Cross-stage contract tokens match token-for-token?** (`scope=`, `test(scope)→feat(scope)`, commit
   subject format — verifier/implementer/hook must agree exactly.)
 - **Producer/consumer *format* assumptions.** (e.g. a TDD hook that parses only a literal `-m` subject;
-  a `$(cat <<EOF)` heredoc fails it open → fix producer-side in the implementer's commit contract.)
+  a `$(cat <<EOF)` heredoc fails it open — the fix layer is covered in "Lessons" below.)
 - **Schema gap in ARTIFACTS surfacing as producer↔consumer drift.** (e.g. a `manual`-AC with no VERIFY
   representation → planner dumps it in Coverage gaps → verifier orphan-BLOCK. Fix by adding one line to
   ARTIFACTS, then re-checking referrers.)

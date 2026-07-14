@@ -12,8 +12,7 @@ wrong build.** Load this with `/plan-methodology <slice>`.
 ### 1. Pick the next thing from the repo's own signals — not from memory
 Read the build-status line (CLAUDE.md), the roadmap (ARCHITECTURE), and `grep -rn "DEFERRED(Phase <N>"`.
 The next component is whatever those name as pending. **Do not trust the session-start git snapshot or
-memory** — both can be stale/contradictory (a snapshot showing HEAD behind reality; memory calling a
-lane both "uncommitted" and "committed"). Confirm state with a live `git log --oneline` / `git status`
+memory** — both can be stale or contradictory. Confirm state with a live `git log --oneline` / `git status`
 before believing any "X is done / pending" claim.
 
 ### 2. Explore the real files before designing
@@ -32,8 +31,8 @@ reflexive ones.
 ### 4. Dogfood the plan — fresh reviewer **and** hand-review, then converge
 This is the core quality move. Run **both**:
 - **A fresh-context adversarial reviewer** (a `general-purpose` subagent told to *be* the devloop
-  reviewer — apply its 6 methodology directives: adversarial framing · cross-artifact consistency ·
-  verify-don't-trust · parallel-treatment · intent/implied-edge-cases · brittleness). Fresh context
+  reviewer — have it read and apply the methodology directives in `agents/reviewer.md` § "Review
+  methodology"; don't re-list them here, the agent file is the source of truth). Fresh context
   catches what your own is blind to.
 - **Your own hand-review** applying the same directives with project depth the subagent lacks.
 

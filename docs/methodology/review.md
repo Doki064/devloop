@@ -1,25 +1,20 @@
 # Methodology — how to cross-review a devloop slice
 
 ## Purpose
-devloop is built human-in-the-loop, **one slice at a time**. Every landed slice — whether you built it
-or it arrived committed from another session — gets a **multi-pass cross-review** before it's "done."
-This is the *method* + *lessons* for reviewing a slice. Load it with `/review-methodology <slice>`.
-
-## When this applies
-The user says some variant of "the X slice landed, review it as before" / "do the same cross-review."
-X may be a skill, agent, command, hook, or doc change. Output = findings, fixes for the substantive
-ones, re-validation, focused commits, memory update — and **PR-to-main left to the user**.
+Every landed slice — built here or arrived committed from another session — gets a **multi-pass
+cross-review** before it's "done." This is the *method* + *lessons* for reviewing a slice. Output =
+findings, fixes for the substantive ones, re-validation, focused commits, memory update — and
+**PR-to-main left to the user**. Load with `/review-methodology <slice>`.
 
 ## The repeatable cycle
 0. **Discover the landed state.** `git status --porcelain`, `git log --oneline -8`, list the slice's
    files on disk. Is it committed or uncommitted? Which commits are the slice? Did those commits touch
    *other* stages too (they often do — check the diff stat)?
-1. **Read the sources of truth, in order** (deepest wins): the design log (`docs/ARCHITECTURE.md` is
-   the in-repo design reference — pipeline, stage table, principles, phased roadmap) → `docs/ARTIFACTS.md`
-   (the artifact contract the slice reads/writes) → `CLAUDE.md` → the project's persisted memory notes
-   (project conventions + prior-feedback rules). **Also read the sibling/template slice** (the closest
-   cousin — e.g. verify is the template for parameterized skill→agent stages) **and every file the
-   slice's contract touches cross-stage.**
+1. **Read the sources of truth, in order** (deepest wins): the design log (`docs/ARCHITECTURE.md`) →
+   `docs/ARTIFACTS.md` (the artifact contract the slice reads/writes) → `CLAUDE.md` → the project's
+   persisted memory notes (project conventions + prior-feedback rules). **Also read the
+   sibling/template slice** (the closest cousin — e.g. verify is the template for parameterized
+   skill→agent stages) **and every file the slice's contract touches cross-stage.**
 2. **Two passes — do not stop at Pass 1:**
    - **Pass 1 — correctness/consistency/drift.** Design *kind* correct (inline vs skill→agent per
      ARCHITECTURE)? Frontmatter valid, tools least-privilege, `disable-model-invocation` where the
@@ -32,7 +27,8 @@ ones, re-validation, focused commits, memory update — and **PR-to-main left to
    *non-bug* (report so nobody "fixes" a correct thing later). Never invent findings to look thorough —
    "Clean, nothing to flag" is a valid result (the reviewer agent lives by this too).
 4. **For deterministic code, VERIFY EMPIRICALLY — don't reason about it.** Run it, test it, feed it the
-   edge inputs. Fetch the *authoritative* source when a claim is load-bearing.
+   edge inputs (e.g. confirm a fail-open by running the gate on literal vs heredoc inputs, not by
+   asserting it). Fetch the *authoritative* source when a claim is load-bearing.
 5. **Fix the substantive findings** with minimal surgical edits, at the **right layer** (root cause,
    least risk). Defer what can't be finished now as `DEFERRED(Phase N):` markers at the change site.
 6. **Re-validate every edited file** (the revalidate-after-edit rule): SKILL.md → `skill-reviewer`;
@@ -66,8 +62,6 @@ Run every landed slice against these; headline findings tend to come from here:
   broken while the **current official docs** show it's correct and recommended (e.g. a hook's
   `command`+`args` exec form for `${CLAUDE_PLUGIN_ROOT}` placeholders). **Before changing landed,
   working code on a validator's say-so, confirm against the authoritative source.**
-- **Empirical > analytical for deterministic code.** Confirm a fail-open by *running the gate* on
-  literal vs heredoc inputs, not by asserting it. When you can execute it, execute it.
 - **Fix at the layer that doesn't reintroduce the risk.** (e.g. a heredoc fail-open belongs in the
   implementer's commit contract, **not** the hook — teaching the hook to parse heredocs would create
   the false-denies the whole component is designed to avoid.) Root-cause, least-risk.
@@ -76,13 +70,8 @@ Run every landed slice against these; headline findings tend to come from here:
   code is worse than one that over-asks. Judge accordingly. In a **resumable** pipeline, "work-safe"
   means safe for *progress* too: an auto-fix that loses no committed bytes but discards resume state —
   re-running a completed, maybe interactive, stage — is a real cost, not a free cleanup.
-- **Two passes, genuinely.** Pass 1 confirms it's well-formed; Pass 2 is where the substantive findings
-  come from. A one-pass review passes every slice as "clean."
-- **Report non-bugs too.** Recording "this looks wrong but is right, and here's why the validator is
-  stale" is as valuable as a fix; it stops a future session from breaking it.
 - **Surface, don't silently edit, the finalized docs** — but *do* add to ARTIFACTS when there's a real
-  schema gap (then re-check referrers). Human-in-the-loop: fix clear findings, surface judgment calls,
-  never take the PR.
+  schema gap (then re-check referrers). Human-in-the-loop: fix clear findings, surface judgment calls.
 
 ## What NOT to do
 - Don't spawn review subagents for the reading/analysis **when your context is already fresh** — a new
@@ -92,13 +81,5 @@ Run every landed slice against these; headline findings tend to come from here:
   (as the planning methodology does) and apply/revalidate/commit the fixes yourself.** The freshness is
   what matters, not the agent boundary. The `skill-reviewer`/`plugin-validator` dispatches stay only for
   the *validate-after-edit* step (the project's sanctioned tooling).
-- Don't inflate severity or manufacture findings. Don't fix polish that triggers a mandatory
-  re-validation for a marginal wording gain.
+- Don't fix polish that triggers a mandatory re-validation for a marginal wording gain.
 - Don't edit finalized ARCHITECTURE to resolve drift without surfacing it.
-- Don't commit the PR to main.
-
-## Concrete artifacts to imitate (historical)
-Worked examples from the review session that produced this method, as calibration for the size/shape of
-a good review fix (SHAs are historical pointers — read their diffs + messages if still in history):
-`bf61fa1` (verify build), `2b69366` (spec/plan review fixes), `e2e0f2c` (ship), `4bfd157` (reviewer
-RV1), `2c97bf3` (TDD-hook heredoc fix).

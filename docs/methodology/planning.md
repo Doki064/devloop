@@ -1,9 +1,7 @@
 # Methodology — how to plan, plan-review, and refine a devloop slice
 
 **Purpose.** The working *method* for planning a devloop slice, reviewing your own plan, and refining
-it until it's review-ready. Not about any one component. The through-line: **ground every claim in the
-live artifact, dogfood the plan before trusting it, and leave behind the one test that would catch a
-wrong build.** Load this with `/plan-methodology <slice>`.
+it until review-ready. Load this with `/plan-methodology <slice>`.
 
 ---
 
@@ -25,8 +23,7 @@ that needs *fresh, uncontaminated* context: the plan review (step 4).
 ### 3. Confirm genuine forks with the user — but only genuine ones
 If a decision has **no safe default and changes the artifact**, ask with `AskUserQuestion` and lead
 with a recommendation (e.g. a hook's fail-open-vs-fail-closed posture, or a cross-platform runtime). If
-a choice has an obvious default, take it and say so — don't ask. One good fork question beats five
-reflexive ones.
+a choice has an obvious default, take it and say so — don't ask.
 
 ### 4. Dogfood the plan — fresh reviewer **and** hand-review, then converge
 This is the core quality move. Run **both**:
@@ -46,18 +43,17 @@ catches a wrong classification of environmental/runtime state; that needs execut
 Two classes produce most real findings — check them deliberately every time:
 - **Parallel-treatment / cross-artifact consistency.** Like items must be treated alike. (Example: a
   predicate that failed *open* on an ambiguous parse but *closed* on an ambiguous lookup — same
-  invariant, opposite handling; or a hook that scanned `git log` exactly like the verifier but lacked
-  the verifier's `DEFERRED(Phase 5)` marker.) An unjustified asymmetry between structurally-parallel
-  things *is* the defect.
+  invariant, opposite handling.) An unjustified asymmetry between structurally-parallel things *is* the
+  defect.
 - **Verify-don't-trust.** Treat every claim in the plan (and in memory, and in a cited `file:line`) as
   a hypothesis to confirm against the file — grep the markers, run `git log`, read the actual built
   artifact instead of assuming greenfield.
 
 ### 6. Break your own assumptions on pushback; research authoritative sources before re-deciding
-When the user contradicts you, **do not re-guess**. (Example: asserting "Claude Code guarantees node" →
-pushback → instead of swapping to another guess, WebFetch the **official docs** and find *no runtime is
-guaranteed*.) Being wrong twice is fine **if** each correction is grounded in an authoritative source,
-not a fresh assumption. Third-party blogs ≠ authority; prefer `code.claude.com/docs`.
+When the user contradicts you, **do not re-guess** (e.g. "node is guaranteed" → pushback → WebFetch the
+official docs: *no* runtime is guaranteed). Being wrong twice is fine **if** each correction is grounded
+in an authoritative source, not a fresh assumption. Third-party blogs ≠ authority; prefer
+`code.claude.com/docs`.
 
 ### 7. Validate the plan against the design idea + the real target — add the guard test
 Before calling a plan review-ready (especially a *port/convert* plan a later session grades a build
@@ -72,8 +68,8 @@ flush-before-exit, path separators, spawn-failure degradation) so the reviewer h
 **When the plan's logic branches on environmental state** (git remote present/absent, unborn HEAD,
 dirty tree, path separators), *run that branch logic in isolation against each case before
 review-ready* — do not settle for another read. A reading review ratifies a plausible-but-wrong
-classification: a plan that lumped "no remote" together with "no base branch" into one
-un-bootstrapped→STOP survived four reading reviews and only broke when executed on a real local repo.
+classification (a plan lumping "no remote" with "no base branch" survived four reading reviews and
+broke only on execution).
 **But isolation alone is a trap when the feature's own outputs feed the signal:** also run the case
 where the feature's *own* artifacts generate the environmental state — a dirty-tree check tripped by
 the very untracked markers the pipeline drops — which a synthetic isolated fixture (a lone `dirty.txt`)
@@ -82,30 +78,23 @@ sails past; only a run where the system's own state produces the signal exposes 
 ---
 
 ## Reflexes that make it work (the invariants under the steps)
-- **Live source > snapshot > memory.** Re-derive state; never trust a cached claim about it.
 - **Fold findings, then re-validate — refinement introduces new staleness.** Every edit pass can rot a
   premise; after folding, re-read for what the edits broke — and when the fold *materially rewrites
   logic* (not just wording), re-run the **fresh** reviewer, not just a self re-read: the re-read shares
-  the blind spot that wrote the fold (a `process.cwd()` "fix" that re-opened the very bypass it closed
-  survived self-review, and only a fresh pass caught it).
+  the blind spot that wrote the fold (a "fix" that re-opened the bypass it closed survived self-review;
+  only a fresh pass caught it).
 - **Deliberate ≠ accidental.** A gap the artifact explicitly justifies (a marker, an out-of-scope note)
   is not a finding. Don't flag reasoned simplifications; do flag silent ones.
 - **Keep the plan lean (prune test) but review-ready.** Enough that a build can be graded against it;
   no filler. Record what's *explicitly NOT done* and why, so scope-creep and "clean bill vs deferred"
   don't get confused.
-- **Ponytail on the design too.** Prefer the change that *removes* dependencies; the laziest faithful
-  solution is the right one — once you understand the problem.
-
-## Anti-patterns to avoid
-- Auto-building the moment a plan is approved when the plan's own scope defers the build to a later
-  session — honor it (brainstorm-before-build).
-- Spawning cold agents to re-derive held context (only the fresh-reviewer dispatch is worth it).
-- Re-guessing after a correction instead of consulting the authority.
-- Passing a test suite as proof without the fixture that distinguishes right from plausibly-right.
+- **Ponytail on the design too** — prefer the change that removes dependencies; laziest faithful
+  solution wins.
 
 ## Done = review-ready
 A plan is ready to hand off when: every factual claim is grounded in a live file; the dogfood pass
 (fresh + hand) is recorded with findings folded in; the parallel-treatment and verify-don't-trust
 sweeps ran; explicitly-not-doing is stated; and — for a build/convert plan — a guard test exists that a
 wrong-but-green build would fail. Then a separate session can grade the build against the plan with
-nothing left to interpret.
+nothing left to interpret. Don't auto-build the moment a plan is approved when its own scope defers the
+build to a later session — honor it (brainstorm-before-build).

@@ -63,7 +63,7 @@ Check-method tag (how verify confirms it):
 - **AC-3** [truth]: IF <condition> THEN THE SYSTEM SHALL <response>
 
 ## Open questions
-- [NEEDS CLARIFICATION: <what's unresolved>]   (resolve before ship, or convert to a `manual` AC)
+- [NEEDS CLARIFICATION: <what's unresolved> (Q4)]   (resolve before ship, or convert to a `manual` AC; cite the `Q<N>` when carrying an unresolved INTENT question)
 ```
 
 **Definition of Done:**
@@ -72,7 +72,7 @@ Check-method tag (how verify confirms it):
 - [ ] No bare `[NEEDS CLARIFICATION]` remains — each is resolved or recorded as a `manual` named hole.
 - [ ] No vague criteria ("fast", "user-friendly") — each is falsifiable.
 - [ ] Completeness sweep done — each implied error/edge/trust/concurrency category is surfaced as an AC or an explicit out-of-scope/`manual` note (not silently absent).
-- [ ] If INTENT.md exists: every `Q<N>` is resolved (INTENT Answers / RESEARCH Finding / ASSUMPTIONS entry) or appears in this SPEC as `[NEEDS CLARIFICATION]` / a `manual` AC.
+- [ ] If INTENT.md exists: every `Q<N>` is resolved (INTENT Answers / RESEARCH Finding / ASSUMPTIONS entry) or appears in this SPEC as a `[NEEDS CLARIFICATION]` / `manual` AC **citing its `Q<N>`** (byte-checked: `intent-lint … stage=spec`).
 
 ---
 
@@ -288,21 +288,24 @@ makes it a real question) · optional `[irreversible]`. Resolution is **derived 
 - **Purpose:** distilled findings answering the INTENT questions routed to research — evidence-up,
   a decision record, never a transcript. Bounded: no finding without a Q-id.
 - **Location:** `specs/<slug>/RESEARCH.md` · **Durability:** EPHEMERAL (archived on ship).
-- **Writer:** researcher agent (parallel researchers merge into one file). Header records mode.
+- **Writer:** the research stage — researchers *return* findings; the dispatching skill merges
+  parallel returns into this one file, section-targeted. Header records mode.
 
 ```markdown
-# Research: <feature name>  (mode=greenfield|brownfield)
+# Research: <feature name>  (mode=brownfield)
 
 ## Findings
-- **Q2** [high]: p95<200ms is the platform norm; adopt it. — <url | file:line>
+- **Q2** [high]: p95<200ms is the platform norm; adopt it. — docs/slo.md:12
 
 ## Unanswered
 - **Q4**: queue internals undocumented → risk: PLAN may double-build a worker; flag at plan review.
 ```
 
 One line per finding: `Q<N>` · confidence `[high|med|low]` · the answer · a concrete source
-(external URL for greenfield; `file:line` allowed in brownfield). Unanswered questions become
-**named risks** — spec converts each to `[NEEDS CLARIFICATION]` or a `manual` AC.
+(external URL for greenfield; `file:line` allowed in brownfield). The source is the text after the
+line's **last** ` — ` separator — answer prose may contain spaced em dashes, the source must not.
+Unanswered questions become **named risks** — spec converts each to `[NEEDS CLARIFICATION]` or a
+`manual` AC citing the `Q<N>`.
 
 **Definition of Done:**
 - [ ] Header records `mode`.

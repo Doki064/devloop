@@ -33,10 +33,13 @@ never enters the judgment; only the verdict returns.
 
 ## Handoff
 
-On **PASS** → state the next step: `/devloop:ship <feature-name>` (or continue via the driver). On
-**FAIL** → surface the failed ACs / BLOCK rows. Run standalone, verify just reports them for the user
-to address and re-run; **under the driver, a FAIL feeds the self-heal loop**
-(`skills/drive/SKILL.md` step 6a), which loops back to implement (capped 3, no-progress-aborted).
+On **PASS** → state the next step: with `stage=impl`, `/devloop:ship <feature-name>`; with
+`stage=plan`, `/devloop:implement <feature-name>` (or continue via the driver). Standalone only (skip
+under the driver): tell the user to run `/clear` (or start a new session) for fresh context before the
+next devloop command. On **FAIL** → surface the failed ACs / BLOCK rows. Run standalone,
+verify just reports them for the user to address and re-run; **under the driver, a FAIL feeds the
+self-heal loop** (`skills/drive/SKILL.md` step 6a), which loops back to implement (capped 3,
+no-progress-aborted).
 
 The "ship blocked on verify PASS" gate is enforced by the **ship** stage (it reads the VERIFY
 verdict), not here — verify only produces the verdict.

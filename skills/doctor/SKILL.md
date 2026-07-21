@@ -34,6 +34,8 @@ sees only the verdict + what was fixed, never the scan noise.
 
 ## Handoff
 
-Standalone, doctor just reports (and optionally repairs) — the human acts on it. **Under the driver**,
-doctor runs pre-resume (`skills/drive/SKILL.md`): `CLEAN`/`ISSUES` lets the resume proceed against the
-now-consistent state; `BLOCK` stops the resume with doctor's reason.
+Standalone, doctor just reports (and optionally repairs) — the human acts on it, then runs the
+pipeline stage the verdict points to. **Under the driver**, doctor runs pre-resume
+(`skills/drive/SKILL.md`): `CLEAN`/`ISSUES` lets the resume proceed against the now-consistent state;
+`BLOCK` stops the resume with doctor's reason. Standalone only (skip under the driver): tell the user
+to run `/clear` (or start a new session) for fresh context before the next devloop command.

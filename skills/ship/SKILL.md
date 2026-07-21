@@ -86,4 +86,5 @@ read the verdict and rows against that schema rather than guessing.
 
 Report the PR URL and stop. This is the terminal stage — **human PR review is the checkpoint**;
 ship does not merge. If any `MANUAL` rows were carried in, name them so the reviewer knows what to
-resolve before merging.
+resolve before merging. The pipeline is done: tell the user to run `/clear` (or start a new session)
+for fresh context before starting the next feature.

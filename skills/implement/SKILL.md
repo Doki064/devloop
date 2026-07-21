@@ -35,3 +35,5 @@ hygiene — the detailed edit-by-edit reasoning stays out of this conversation; 
 
 State the next step: `/devloop:verify <feature-name>` (or continue via the driver). Each `tdd` task's
 `test(scope)→feat(scope)` commit pair is the evidence verify checks against the PLAN's `scope=` tokens.
+Standalone only (skip under the driver): tell the user to run `/clear` (or start a new session) for
+fresh context before running verify.

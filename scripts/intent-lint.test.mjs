@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 // Dogfood for intent-lint.mjs — assert-based, no framework. Every case isolated in its own os.tmpdir()
-// dir so it NEVER touches the real repo. The golden PASS pair is EXTRACTED from docs/ARTIFACTS.md at
-// runtime (the worked INTENT/ASSUMPTIONS examples), so if the doc drifts from the 13 lint rules this
-// test breaks — a living doc-code guard. The 13 FAIL fixtures are programmatic mutations of that golden,
-// one per byte-checkable rule, each asserting exactly the expected violation surfaces.
+// dir so it NEVER touches the real repo. The golden PASS pairs/trios are EXTRACTED from docs/ARTIFACTS.md
+// at runtime (the worked INTENT/ASSUMPTIONS/RESEARCH examples), so if the doc drifts from the lint rules
+// this test breaks — a living doc-code guard. FAIL fixtures are programmatic mutations of that golden,
+// one per byte-checkable rule (the 13 INTENT/ASSUMPTIONS rules + the RESEARCH.md sibling rules + the
+// stage-gated RESEARCH/SPEC Q-joins), each asserting exactly the expected violation surfaces.
 import assert from 'node:assert';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -53,6 +54,7 @@ function extractBlock(doc, heading) {
 const docText = fs.readFileSync(DOC, 'utf8');
 const GOLDEN_INTENT = extractBlock(docText, '## INTENT.md');
 const GOLDEN_ASSUMPTIONS = extractBlock(docText, '## ASSUMPTIONS.md');
+const GOLDEN_RESEARCH = extractBlock(docText, '## RESEARCH.md');
 
 function writePair(dir, intent, assumptions) {
   fs.writeFileSync(join(dir, 'INTENT.md'), intent);
@@ -69,6 +71,47 @@ function run(intent, assumptions) {
   } finally {
     fs.rmSync(work, { recursive: true, force: true });
   }
+}
+
+// Run lint over an arbitrary sibling set. files = {intent, assumptions?, research?, spec?}; null/absent
+// keys are simply not written. Optional stage token is passed through to lint().
+function runTrio(files, stage) {
+  const work = mkwork();
+  try {
+    fs.writeFileSync(join(work, 'INTENT.md'), files.intent);
+    if (files.assumptions != null) fs.writeFileSync(join(work, 'ASSUMPTIONS.md'), files.assumptions);
+    if (files.research != null) fs.writeFileSync(join(work, 'RESEARCH.md'), files.research);
+    if (files.spec != null) fs.writeFileSync(join(work, 'SPEC.md'), files.spec);
+    return lint(join(work, 'INTENT.md'), stage);
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
+// Minimal schema-valid INTENT (all Coverage rows Clear, no other rule fires) — for the spec-join arms
+// that need a hand-built ledger rather than a mutated golden.
+function minimalIntent(questions, answers) {
+  return `# Intent: test feature
+
+## Goal
+A test feature for the resolution-source arms.
+
+## Coverage
+| category | status | note |
+|----------|--------|------|
+| goal | Clear | |
+| scope | Clear | |
+| success-criteria | Clear | |
+| constraints | Clear | |
+| integration-surface | Clear | |
+| edge/failure | Clear | |
+
+## Questions
+${questions}
+
+## Answers
+${answers}
+`;
 }
 
 function has(violations, needle) {
@@ -227,6 +270,201 @@ check('edge a: golden dir -> exit 0; violation fixture -> exit 1 (real process)'
 check('edge b: missing ASSUMPTIONS.md + valid INTENT -> clean', () => {
   const v = run(GOLDEN_INTENT, null);
   assert.deepStrictEqual(v, [], `expected clean skip, got:\n${v.join('\n')}`);
+});
+
+// ============================================================================
+// RESEARCH.md sibling rules + stage-gated Q-joins
+// ============================================================================
+
+// ---- Golden RESEARCH trio PASS (living doc-code guard) ----
+check('golden: RESEARCH trio lints clean with no stage AND with stage=research', () => {
+  // Precondition: the golden INTENT's route=research questions are exactly Q2 and Q4 — the two the
+  // golden RESEARCH block satisfies (Q2 in Findings, Q4 in Unanswered). Mirrors the [irreversible]
+  // precondition the INTENT golden asserts.
+  const researchRoutes = [...GOLDEN_INTENT.matchAll(/\*\*(Q\d+)\*\*[^\n]*route=research/g)].map((m) => m[1]).sort();
+  assert.deepStrictEqual(researchRoutes, ['Q2', 'Q4'], 'golden INTENT route=research Qs must be Q2,Q4');
+  assert.ok(/## Findings\n- \*\*Q2\*\*/.test(GOLDEN_RESEARCH), 'golden RESEARCH must answer Q2 in Findings');
+  assert.ok(/## Unanswered\n- \*\*Q4\*\*/.test(GOLDEN_RESEARCH), 'golden RESEARCH must carry Q4 in Unanswered');
+
+  const files = { intent: GOLDEN_INTENT, assumptions: GOLDEN_ASSUMPTIONS, research: GOLDEN_RESEARCH };
+  assert.deepStrictEqual(runTrio(files), [], 'expected clean (no stage)');
+  assert.deepStrictEqual(runTrio(files, 'research'), [], 'expected clean (stage=research)');
+});
+
+// ---- Presence-gated RESEARCH FAIL fixtures (one per new rule) ----
+
+// r1. header carries the placeholder rather than a concrete mode.
+check('research r1: header mode placeholder -> mode violation', () => {
+  const research = GOLDEN_RESEARCH.replace('(mode=brownfield)', '(mode=greenfield|brownfield)');
+  const v = runTrio({ intent: GOLDEN_INTENT, assumptions: GOLDEN_ASSUMPTIONS, research });
+  assert.ok(has(v, 'mode'), `expected a mode violation, got:\n${v.join('\n')}`);
+});
+
+// r2a. a Findings entry with no **Q<N>** -> "no unsolicited research".
+check('research r2a: finding without **Q<N>** -> no-unsolicited-research violation', () => {
+  const research = GOLDEN_RESEARCH.replace('- **Q2** [high]:', '- [high]:');
+  const v = runTrio({ intent: GOLDEN_INTENT, assumptions: GOLDEN_ASSUMPTIONS, research });
+  assert.ok(has(v, 'no unsolicited research'), `expected a no-unsolicited-research violation, got:\n${v.join('\n')}`);
+});
+
+// r2b. a Findings entry citing a Q not in INTENT's Questions.
+check('research r2b: finding cites unknown Q9 -> violation', () => {
+  const research = GOLDEN_RESEARCH.replace('- **Q2** [high]:', '- **Q9** [high]:');
+  const v = runTrio({ intent: GOLDEN_INTENT, assumptions: GOLDEN_ASSUMPTIONS, research });
+  assert.ok(has(v, 'Q9'), `expected an unknown-Q9 violation, got:\n${v.join('\n')}`);
+});
+
+// r3. Q2 appears in both Findings and Unanswered.
+check('research r3: Q2 in Findings AND Unanswered -> duplicate violation', () => {
+  const research = GOLDEN_RESEARCH.replace(
+    '- **Q4**: queue internals undocumented',
+    '- **Q2**: also unresolved → risk: double answer; flag.\n- **Q4**: queue internals undocumented',
+  );
+  const v = runTrio({ intent: GOLDEN_INTENT, assumptions: GOLDEN_ASSUMPTIONS, research });
+  assert.ok(has(v, 'duplicate') && has(v, 'Q2'), `expected a Q2 duplicate violation, got:\n${v.join('\n')}`);
+});
+
+// r4. Q2 finding drops its confidence tag.
+check('research r4: finding missing confidence tag -> violation', () => {
+  const research = GOLDEN_RESEARCH.replace('- **Q2** [high]:', '- **Q2**:');
+  const v = runTrio({ intent: GOLDEN_INTENT, assumptions: GOLDEN_ASSUMPTIONS, research });
+  assert.ok(has(v, 'confidence'), `expected a confidence violation, got:\n${v.join('\n')}`);
+});
+
+// r5a. trailing ` — ` with nothing after -> empty source.
+check('research r5a: empty source after last em-dash -> violation', () => {
+  const research = GOLDEN_RESEARCH.replace(' — docs/slo.md:12', ' — ');
+  const v = runTrio({ intent: GOLDEN_INTENT, assumptions: GOLDEN_ASSUMPTIONS, research });
+  assert.ok(has(v, 'source'), `expected an empty-source violation, got:\n${v.join('\n')}`);
+});
+
+// r5b. no ` — ` separator at all.
+check('research r5b: finding missing the em-dash separator -> violation', () => {
+  const research = GOLDEN_RESEARCH.replace(' — docs/slo.md:12', ' docs/slo.md:12');
+  const v = runTrio({ intent: GOLDEN_INTENT, assumptions: GOLDEN_ASSUMPTIONS, research });
+  assert.ok(has(v, 'separator'), `expected a separator violation, got:\n${v.join('\n')}`);
+});
+
+// r5c. last segment is prose (neither http nor path:line).
+check('research r5c: source is prose, not URL/path:line -> shape violation', () => {
+  const research = GOLDEN_RESEARCH.replace('docs/slo.md:12', 'the platform norm');
+  const v = runTrio({ intent: GOLDEN_INTENT, assumptions: GOLDEN_ASSUMPTIONS, research });
+  assert.ok(has(v, 'source'), `expected a source-shape violation, got:\n${v.join('\n')}`);
+});
+
+// r6. greenfield mode requires an http source; a path:line source violates it.
+check('research r6: greenfield source without http -> greenfield-URL violation', () => {
+  const research = GOLDEN_RESEARCH.replace('(mode=brownfield)', '(mode=greenfield)');
+  const v = runTrio({ intent: GOLDEN_INTENT, assumptions: GOLDEN_ASSUMPTIONS, research });
+  assert.ok(has(v, 'greenfield'), `expected a greenfield-URL violation, got:\n${v.join('\n')}`);
+});
+
+// r7. Unanswered entry without risk:.
+check('research r7: Unanswered entry missing risk: -> violation', () => {
+  const research = GOLDEN_RESEARCH.replace('→ risk: PLAN may double-build a worker', '→ PLAN may double-build a worker');
+  const v = runTrio({ intent: GOLDEN_INTENT, assumptions: GOLDEN_ASSUMPTIONS, research });
+  assert.ok(has(v, 'risk'), `expected a missing-risk violation, got:\n${v.join('\n')}`);
+});
+
+// Separator-robustness PASS guard — kills a split()[1] implementation (its middle segment is prose and
+// would fail source-shape); the true SOURCE is the segment after the LAST ` — `.
+check('research: interior em-dashes with URL last segment -> clean (kills split()[1])', () => {
+  const research = GOLDEN_RESEARCH
+    .replace('(mode=brownfield)', '(mode=greenfield)')
+    .replace(
+      '- **Q2** [high]: p95<200ms is the platform norm; adopt it. — docs/slo.md:12',
+      '- **Q2** [high]: latency target — p95 under 200ms — is the norm; adopt it. — https://example.com/slo',
+    );
+  const v = runTrio({ intent: GOLDEN_INTENT, assumptions: GOLDEN_ASSUMPTIONS, research });
+  assert.deepStrictEqual(v, [], `expected clean, got:\n${v.join('\n')}`);
+});
+
+// Independent-optional refactor: INTENT + RESEARCH, NO ASSUMPTIONS -> RESEARCH rules still run.
+check('research: INTENT+RESEARCH without ASSUMPTIONS still runs RESEARCH rules', () => {
+  const research = GOLDEN_RESEARCH.replace('(mode=brownfield)', '(mode=greenfield|brownfield)');
+  const v = runTrio({ intent: GOLDEN_INTENT, research });
+  assert.ok(has(v, 'mode'), `expected a mode violation with no ASSUMPTIONS present, got:\n${v.join('\n')}`);
+});
+
+// ---- Stage-gated joins ----
+
+// stage=research join: a route=research Q in neither section. No-stage must NOT wedge (discuss re-runs
+// the self-check on files it doesn't own); stage=research fires the named join.
+check('stage=research: route=research Q absent from RESEARCH -> no-stage passes, stage names Q4', () => {
+  const research = GOLDEN_RESEARCH.replace(/\n- \*\*Q4\*\*:[^\n]*/, '');
+  const files = { intent: GOLDEN_INTENT, assumptions: GOLDEN_ASSUMPTIONS, research };
+  assert.deepStrictEqual(runTrio(files), [], 'no-stage must pass (must not wedge discuss)');
+  const v = runTrio(files, 'research');
+  assert.ok(has(v, 'Q4'), `expected a Q4 join violation at stage=research, got:\n${v.join('\n')}`);
+});
+
+// stage=spec terminal Q-join: golden resolves Q1 (Answers) ∪ Q2 (Finding) ∪ Q3 (ASSUMPTIONS link); Q4 is
+// unresolved (only in RESEARCH Unanswered), so it must appear as a `Q4` token in SPEC.md.
+check('stage=spec: unresolved Q4 absent from SPEC -> FAILS; SPEC citing Q4 -> passes', () => {
+  const base = { intent: GOLDEN_INTENT, assumptions: GOLDEN_ASSUMPTIONS, research: GOLDEN_RESEARCH };
+  const specNoQ4 = '# Spec: export\n\n## Goal\nExport feature.\n';
+  const vFail = runTrio({ ...base, spec: specNoQ4 }, 'spec');
+  assert.ok(has(vFail, 'Q4'), `expected a Q4 spec-join violation, got:\n${vFail.join('\n')}`);
+
+  const specWithQ4 = '# Spec: export\n\n## Open questions\n- [NEEDS CLARIFICATION: queue reusability (Q4)]\n';
+  const vPass = runTrio({ ...base, spec: specWithQ4 }, 'spec');
+  assert.deepStrictEqual(vPass, [], `expected clean when SPEC cites Q4, got:\n${vPass.join('\n')}`);
+});
+
+// stage=spec resolution-source arms — each passes with SPEC NOT citing the Q, because the Q is resolved
+// through a distinct channel (Answers / RESEARCH Finding / ASSUMPTIONS link).
+check('stage=spec arm A: Q resolved only via INTENT Answers -> clean (SPEC need not cite it)', () => {
+  const intent = minimalIntent(
+    '- **Q1** [scope] route=user affects=SPEC split="admins only vs all users": Who can trigger?',
+    '- **Q1**: all users.',
+  );
+  const spec = '# Spec: t\n\n## Goal\nA feature.\n';
+  assert.deepStrictEqual(runTrio({ intent, spec }, 'spec'), []);
+});
+
+check('stage=spec arm B: Q resolved only via a RESEARCH Finding -> clean', () => {
+  const intent = minimalIntent(
+    '- **Q1** [scope] route=research affects=SPEC split="admins only vs all users": Who can trigger?',
+    '',
+  );
+  const research = '# Research: t  (mode=brownfield)\n\n## Findings\n- **Q1** [high]: all users. — docs/x.md:1\n\n## Unanswered\n';
+  const spec = '# Spec: t\n\n## Goal\nA feature.\n';
+  assert.deepStrictEqual(runTrio({ intent, research, spec }, 'spec'), []);
+});
+
+check('stage=spec arm C: Q resolved only via an ASSUMPTIONS (Q<N>) link -> clean', () => {
+  const intent = minimalIntent(
+    '- **Q1** [scope] route=user affects=SPEC split="admins only vs all users": Who can trigger?',
+    '',
+  );
+  const assumptions = '# Assumptions: t\n\n- **A1** (Q1): assume all users, not admins only — platform default. affects=SPEC\n';
+  const spec = '# Spec: t\n\n## Goal\nA feature.\n';
+  assert.deepStrictEqual(runTrio({ intent, assumptions, spec }, 'spec'), []);
+});
+
+// ---- CLI / exit-code edges (real process via spawnSync) ----
+check('cli: stage=research w/o RESEARCH -> exit1+missing; stage=spec w/o SPEC -> exit1+missing; stage=bogus -> exit1 usage; INTENT-only no stage -> exit0', () => {
+  const work = mkwork();
+  try {
+    const p = writePair(work, GOLDEN_INTENT, null); // INTENT only, no siblings
+
+    const rResearch = spawnSync('node', [SCRIPT, p, 'stage=research'], { encoding: 'utf8' });
+    assert.strictEqual(rResearch.status, 1, `stage=research: expected exit 1, got ${rResearch.status}`);
+    assert.ok(rResearch.stdout.includes('missing file'), `stage=research: expected "missing file", got:\n${rResearch.stdout}`);
+
+    const rSpec = spawnSync('node', [SCRIPT, p, 'stage=spec'], { encoding: 'utf8' });
+    assert.strictEqual(rSpec.status, 1, `stage=spec: expected exit 1, got ${rSpec.status}`);
+    assert.ok(rSpec.stdout.includes('missing file'), `stage=spec: expected "missing file", got:\n${rSpec.stdout}`);
+
+    const rBogus = spawnSync('node', [SCRIPT, p, 'stage=bogus'], { encoding: 'utf8' });
+    assert.strictEqual(rBogus.status, 1, `stage=bogus: expected exit 1, got ${rBogus.status}`);
+    assert.ok(rBogus.stdout.includes('usage'), `stage=bogus: expected usage, got:\n${rBogus.stdout}`);
+
+    const rPlain = spawnSync('node', [SCRIPT, p], { encoding: 'utf8' });
+    assert.strictEqual(rPlain.status, 0, `INTENT-only no-stage: expected exit 0, got ${rPlain.status}\n${rPlain.stdout}`);
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
 });
 
 console.log('----');

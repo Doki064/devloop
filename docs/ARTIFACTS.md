@@ -16,7 +16,11 @@ rather than re-describing formats inline — one definition, no producer/consume
 - **EARS + check-method tag for criteria.** Requirement phrasing follows EARS (unambiguous,
   testable, model-parseable); the check-method tag says *how* verify checks it. Orthogonal, composable.
 - **Every artifact carries a Definition of Done (DoD) checklist** — a self-check the next stage or
-  `doctor` runs against the file. Stable typed IDs (`AC-N`, `T-N`) are the traceability anchors.
+  `doctor` runs against the file. Stable typed IDs (`AC-N`, `T<N>`) are the traceability anchors.
+- **Token-lean, always.** Every artifact is written for downstream consumers and costs tokens on every
+  downstream read — no filler words, no restated context, no narrative prose. Every line must change
+  what a consumer (planner/implementer/verifier/human) does; if a line could be deleted without
+  changing consumer behavior, delete it.
 
 ## EARS quick reference (for acceptance criteria)
 Constrained requirement syntax; keywords always in this order:
@@ -105,13 +109,13 @@ Check-method tag (how verify confirms it):
 <none | AC-N: reason it cannot be mapped to a task>
 ```
 
-Task fields: stable `T-N` id · `[tdd|standard]` tag · `scope=`\`token\` (the commit scope the TDD
-hook matches, e.g. `test(auth)`→`feat(auth)`) · `deps=[T-ids]` · optional `[P]` parallel marker ·
-`covers=[AC-ids]` for the trace matrix.
+Task fields: stable `T<N>` id (`T1`, `T2`, …) · `[tdd|standard]` tag · `scope=`\`token\` (the commit
+scope the TDD hook matches, e.g. `test(auth)`→`feat(auth)`) · `deps=[T-ids]` · optional `[P]` parallel
+marker · `covers=[AC-ids]` for the trace matrix.
 
 **Definition of Done:**
 - [ ] Every SPEC `AC-N` appears in some task's `covers=` (else listed under Coverage gaps).
-- [ ] Every `tdd` task has a `scope=` token; deps are acyclic and reference real `T-N` ids.
+- [ ] Every `tdd` task has a `scope=` token; deps are acyclic and reference real `T<N>` ids.
 - [ ] Constitution check is PASS.
 - [ ] Each Complexity-tracking entry has a justification (empty section is the good case).
 - [ ] Each task is sized to fit one context window (coherence-cliff law).

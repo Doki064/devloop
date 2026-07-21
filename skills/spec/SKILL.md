@@ -68,7 +68,7 @@ only what informs this feature, never the whole project:
    Each surfaced item becomes **either** a new tagged EARS `AC-N` **or** an explicit *out-of-scope* /
    `manual` note with a reason — **named, never silently dropped** (the completeness counterpart to the
    vague-criteria rejection above, which polices only form).
-   <!-- DEFERRED(Phase 3): once discuss/research + the triage taxonomy land, this front-of-pipeline completeness hunt migrates partly upstream; spec keeps a convergent last-check and this category list reconciles with the triage taxonomy. -->
+   <!-- Reconciled with the triage coverage taxonomy (Phase 3): these four axes are the finer-grained *completeness* hunt inside what triage covers coarsely as edge/failure + constraints *uncertainty*. Spec keeps this sweep as the convergent last-check — triage asks "is this area unclear?", spec asks "is every implied criterion written?" — different questions, deliberately both kept. -->
 
 5. **Self-check before writing.** Confirm every criterion has an EARS form, a check-method tag, and an
    ID, and that the completeness sweep ran. If one genuinely cannot be mechanically checked (e.g.

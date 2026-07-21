@@ -6,6 +6,7 @@ allowed-tools:
   - Write
   - Glob
   - Grep
+  - Bash
   - AskUserQuestion
 ---
 
@@ -25,6 +26,10 @@ only what informs this feature, never the whole project:
 
 - `specs/<slug>/INTENT.md` and `specs/<slug>/RESEARCH.md` if present (from earlier stages) — they
   carry the goal, open questions, and findings to formalize.
+- `specs/<slug>/ASSUMPTIONS.md` if present — defaults already chosen (autonomous discuss, or the
+  triage record-as-assumption filter). **Treat each entry as given**: formalize it into the SPEC;
+  never re-ask the user what an `A<N>` already decided (re-asking defeats autonomous mode — ship
+  surfaces the whole file for human confirmation later).
 - `CONSTITUTION.md` if present — the project's thin conventions doc to respect while specifying.
 - `ROADMAP.md` if present — find this feature's row for its declared **Boundary** (scope edges) and
   **depends[]** (upstream features whose SPECs constrain this one). Treat these as given; ask the
@@ -35,7 +40,8 @@ only what informs this feature, never the whole project:
 
 ## Process
 
-1. **Establish goal and boundaries.** From INTENT + ROADMAP (or by asking), pin down: the goal in
+1. **Establish goal and boundaries.** From INTENT + RESEARCH + ASSUMPTIONS + ROADMAP (or by
+   asking), pin down: the goal in
    1–2 sentences, what is **in scope** vs explicitly **out of scope**, and hard constraints (perf,
    compat, security, deadlines). Batch questions — do not interrogate one field at a time. When the feature
    admits more than one reasonable interpretation, surface the alternatives and let the user choose —
@@ -83,6 +89,13 @@ truth for the format; follow it rather than improvising sections.
 Keep it lean — a spec is a contract, not an essay. Every line must be something a verifier or
 planner will act on. Keep the `**AC-N** [tag]:` bullet format exact: downstream stages parse it
 mechanically to build the criterion ↔ test trace matrix.
+
+**Self-check after writing** — when `specs/<slug>/INTENT.md` exists, run
+`node ${CLAUDE_PLUGIN_ROOT}/scripts/intent-lint.mjs specs/<slug>/INTENT.md stage=spec` — exit 0,
+or fix the printed violations and re-run. This is the mechanical half of the DoD's terminal
+Q-join: an INTENT question resolved nowhere (no Answer, no RESEARCH Finding, no ASSUMPTIONS
+entry) must be carried into this SPEC as a `[NEEDS CLARIFICATION: … (Q<N>)]` entry or a `manual`
+AC citing its `Q<N>`. No INTENT.md → skip the command (nothing to join).
 
 ## Handoff
 

@@ -273,7 +273,7 @@ Question fields: stable `Q<N>` (never reused/renumbered) · `[category]` from th
 artifact → drop or assume) · `split="<reading A> vs <reading B>"` (the interpretation divergence that
 makes it a real question) · optional `[irreversible]`. Resolution is **derived by Q-id join**
 (Answers / RESEARCH Findings / ASSUMPTIONS entry / else open) — never stored as a status field.
-<!-- DEFERRED(Phase 3): fix the exact coverage-taxonomy category list at the triage build slice — must reconcile with the spec completeness-sweep categories (skills/spec/SKILL.md step 4). -->
+<!-- Taxonomy fixed at these six categories (Phase 3, discuss slice). Reconciliation with spec's completeness sweep (skills/spec/SKILL.md step 4): spec's four axes are the finer-grained *completeness* hunt inside what triage covers coarsely as edge/failure + constraints *uncertainty* — triage asks "is this area unclear?", spec asks "is every implied criterion written?" — different questions, deliberately both kept. -->
 
 **Definition of Done:**
 - [ ] Goal present.

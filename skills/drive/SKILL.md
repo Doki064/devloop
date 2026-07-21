@@ -194,8 +194,8 @@ is a cheap secondary guard for the case doctor was unavailable or degraded). Do 
 
 8. **Stop at the ship boundary.** Do **not** invoke ship — it is `disable-model-invocation` by
    design (pushing the branch + opening the PR is the human checkpoint). Report that the feature is
-   verified and ready, and instruct: **run `/devloop:ship <feature-name>`** to push the branch and
-   open the PR.
+   verified and ready, and instruct per the Handoff below: run `/clear` (or start a new session) for
+   fresh context, then `/devloop:ship <feature-name>` to push the branch and open the PR.
 
 **On any stage failure** (a missing artifact, a BLOCK, a task that won't go GREEN, or a verify FAIL the
 self-heal loop could not clear): report **which stage** stopped the run and the artifact/BLOCK/failing
@@ -214,5 +214,6 @@ findings, bounded by strict finding-count decrease — advisory, so it *continue
 ## Handoff
 
 Terminal state is **"verified PASS, ready to ship"** — drive stops one deliberate step short of the
-side effect. The human runs `/devloop:ship <feature-name>`; the PR is the checkpoint. If verify
-carried any `MANUAL` named-hole rows, name them so the shipper knows what the PR will surface.
+side effect. Tell the user: run `/clear` (or start a new session) for fresh context, then
+`/devloop:ship <feature-name>`; the PR is the checkpoint. If verify carried any `MANUAL` named-hole
+rows, name them so the shipper knows what the PR will surface.

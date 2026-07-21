@@ -87,4 +87,5 @@ mechanically to build the criterion ↔ test trace matrix.
 ## Handoff
 
 State the next step: `/devloop:plan <feature-name>` (or continue via the driver). The criterion IDs
-are the anchor the plan maps tasks and tests to.
+are the anchor the plan maps tasks and tests to. Standalone only (skip under the driver): tell the
+user to run `/clear` (or start a new session) for fresh context before running plan.

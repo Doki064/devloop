@@ -41,4 +41,5 @@ while the plan is still just words and nothing is committed.
 
 Then state the next step: `/devloop:implement <feature-name>` (or continue via the driver). Tasks
 carry `covers=[AC-ids]`, so implement and verify trace each task back to the SPEC criteria it
-satisfies.
+satisfies. Standalone only (skip under the driver): tell the user to run `/clear` (or start a new
+session) for fresh context before the next devloop command.

@@ -51,3 +51,6 @@ run this alongside the mechanical `/devloop:verify <feature-name> stage=plan` co
 On **`target=impl`** → this is a quality pass before `/devloop:ship <feature-name>`; address findings
 at your discretion. The PR is the human checkpoint; review never blocks the ship — the `impl-verify`
 PASS is the only gate there.
+
+Standalone only (skip under the driver): tell the user to run `/clear` (or start a new session) for
+fresh context before the next devloop command above.

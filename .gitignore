@@ -1,6 +1,2 @@
 # devloop runtime marker for the self-heal loop (ephemeral; never committed).
 .devloop/
-
-# Local build handoff (never committed)
-.claude/HANDOFF.md
-.claude/plans/

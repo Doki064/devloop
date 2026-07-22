@@ -8,8 +8,8 @@ import { pathToFileURL } from 'node:url';
 // EOF). Prefix-agnostic on purpose — findings are one line each, bulleted or not. Section absent or
 // empty -> 0 (same as an explicit sentinel-only body). The sentinel check strips an optional leading
 // markdown bullet so `- Clean. Nothing to flag.` counts as clean too (the reviewer may bullet it to
-// match the ARTIFACTS schema's list style) — a bulleted sentinel must not read as one spurious finding.
-// ponytail: assumes one line per finding (the ARTIFACTS DoD) — a wrapped/multi-line finding over-counts;
+// match the REVIEW contract's list style) — a bulleted sentinel must not read as one spurious finding.
+// ponytail: assumes one line per finding (the REVIEW.md contract's DoD) — a wrapped/multi-line finding over-counts;
 // harmless for an advisory lane (loop still terminates via strict-decrease), tighten only if it bites.
 function countFindings(content) {
   const lines = content.split(/\r?\n/);

@@ -156,8 +156,8 @@ check('8b. self-fed loop: stalled 3->3 terminates at no-progress', () => {
   }
 });
 
-// 9. Bulleted sentinel `- Clean. Nothing to flag.` (the reviewer may bullet it to match the ARTIFACTS
-//    list style) -> must still read as clean, NOT one spurious finding that wastes a replan.
+// 9. Bulleted sentinel `- Clean. Nothing to flag.` (the reviewer may bullet it to match the REVIEW
+//    contract's list style) -> must still read as clean, NOT one spurious finding that wastes a replan.
 check('9. bulleted sentinel -> continue 0 clean', () => {
   const work = mkwork();
   try {

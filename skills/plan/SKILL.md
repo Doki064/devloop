@@ -1,6 +1,7 @@
 ---
 name: plan
 description: This skill should be used when the user wants to turn a finished SPEC into an executable task plan in a devloop project — when they say "plan this", "break the spec into tasks", "write a plan", "make the implementation plan", or after spec and before implement. Delegates to the planner agent to produce a traceable specs/<slug>/PLAN.md.
+argument-hint: "<feature-name> [replan]"
 allowed-tools:
   - Glob
   - Task
@@ -14,7 +15,8 @@ context hygiene — the detailed reasoning stays out of this conversation; only 
 
 ## Process
 
-1. **Slugify** the feature name you were given (lowercase, hyphens) → `<slug>`. Parse an optional
+1. The feature name is `$ARGUMENTS` (slash-invoked) or inferred from the conversation / asked when
+   empty (model-invoked). **Slugify** it (lowercase, hyphens) → `<slug>`. Parse an optional
    **`replan`** token from the arguments (the driver's plan-review→re-plan loop passes it when
    REVIEW.md findings warrant a revised plan; a re-gate re-entry passes it with a discovery text);
    absent by default → a normal first plan. Keep any **discovery text** stated alongside `replan` —

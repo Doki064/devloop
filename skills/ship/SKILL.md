@@ -1,6 +1,7 @@
 ---
 name: ship
-description: Run the devloop ship stage for a feature — gate on its VERIFY.md PASS verdict, then push the current branch and open a PR. Invoked explicitly (via /devloop:ship or the driver), never auto-selected; it performs a git side effect, so it stays deterministic.
+description: Run the devloop ship stage for a feature — gate on its VERIFY.md PASS verdict, then push the current branch and open a PR. Invoked explicitly (via /devloop:ship, including on the driver's handoff instruction), never auto-selected; it performs a git side effect, so it stays deterministic.
+argument-hint: "<feature-name>"
 disable-model-invocation: true
 allowed-tools:
   - Read
@@ -17,7 +18,8 @@ acceptance criteria surface in the PR body for a human to resolve there.
 
 ## Inputs
 
-Slugify the feature name you were given (lowercase, hyphens) → `<slug>`. `<slug>` only locates the
+The feature name is `$ARGUMENTS` (slash-invoked) or inferred from the conversation / asked when empty.
+Slugify it (lowercase, hyphens) → `<slug>`. `<slug>` only locates the
 spec files; ship pushes the **current git branch**, which is not derived from the slug. Read only
 this feature's bounded set — never the whole project:
 

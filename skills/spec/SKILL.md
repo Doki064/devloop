@@ -1,6 +1,7 @@
 ---
 name: spec
 description: This skill should be used when the user wants to turn a feature idea into a specification with acceptance criteria in a devloop project — when they say "spec this", "write a spec", "define acceptance criteria", "what does done mean for X", or before planning or implementing any non-trivial feature. Produces a durable specs/<slug>/SPEC.md contract whose every criterion is mechanically checkable.
+argument-hint: "<feature-name>"
 allowed-tools:
   - Read
   - Write
@@ -21,7 +22,8 @@ This is the convergent stage: narrow the feature down to what "done" provably me
 
 ## Inputs
 
-Slugify the feature name you were given (lowercase, hyphens) → `<slug>`. Then gather the bounded working set — read
+The feature name is `$ARGUMENTS` (slash-invoked) or inferred from the conversation / asked when empty
+(model-invoked). Slugify it (lowercase, hyphens) → `<slug>`. Then gather the bounded working set — read
 only what informs this feature, never the whole project:
 
 - `specs/<slug>/INTENT.md` and `specs/<slug>/RESEARCH.md` if present (from earlier stages) — they

@@ -30,7 +30,8 @@ never enters the judgment; only the verdict returns.
    the agent own that (reasoning-blindness depends on it).
 
 4. **On return, surface the verdict.** Report the agent's summary (verdict, AC pass/fail counts, any
-   BLOCK / WARN / MANUAL, test command used). A FAIL or any BLOCK is a real gate — surface it plainly,
+   BLOCK / WARN / MANUAL, any reverse-trace `contradicts` (gating) / `unrequested` (advisory), test
+   command used). A FAIL or any BLOCK is a real gate — surface it plainly,
    never paper over it.
 
 ## Handoff

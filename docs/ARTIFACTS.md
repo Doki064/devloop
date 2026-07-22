@@ -35,7 +35,7 @@ Each contract lives with its writer stage; consumers reference the specific file
 | PLAN.md | `skills/plan/references/PLAN.md` | turns the SPEC into an executable, traceable task breakdown. |
 | VERIFY.md | `skills/verify/references/VERIFY.md` | reasoning-blind evidence that criteria are met (artifacts + test output + git log). |
 | REVIEW.md | `skills/review/references/REVIEW.md` | durable, advisory quality findings — the deliberate inverse of VERIFY.md. |
-| INTENT.md | `skills/discuss/references/INTENT.md` | the feature's front door + open-question ledger (+ the front-end-trio preamble). |
+| INTENT.md | `skills/discuss/references/INTENT.md` | the feature's front door + question/decision ledger (+ the front-end-trio preamble). |
 | RESEARCH.md | `skills/research/references/RESEARCH.md` | distilled findings answering the INTENT questions routed to research. |
 | ASSUMPTIONS.md | `skills/discuss/references/ASSUMPTIONS.md` | defaults chosen without the user — the autonomous-degrade audit trail. |
 | ROADMAP.md | this index (below) | lean cross-feature ordering + dependency index. |

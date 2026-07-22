@@ -52,6 +52,12 @@ only what informs this feature, never the whole project:
    admits more than one reasonable interpretation, surface the alternatives and let the user choose —
    never silently pick one and bury the assumption.
 
+   When `INTENT.md` has a `## Decisions` section, carry each settled decision into the SPEC where it
+   binds — usually a `## Constraints` line or an in/out-of-scope line, sometimes an AC — **citing its
+   `D<N>` token**, e.g. `- exports run async, never inline (D1)`. The `stage=plan` D-join byte-checks
+   this carry at plan exit (a decision reflected only in PLAN also satisfies it, but SPEC is the
+   natural home — it's the durable contract).
+
 2. **Draft criteria in EARS + a check-method tag.** Phrase each requirement in EARS — the constrained,
    testable shapes (WHEN / WHILE / IF / ubiquitous / WHERE) enumerated in the EARS quick reference of
    `${CLAUDE_PLUGIN_ROOT}/skills/spec/references/SPEC.md` — and tag *how* verify confirms it: **truth** (run a

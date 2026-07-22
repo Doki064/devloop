@@ -47,7 +47,11 @@ context hygiene — the detailed reasoning stays out of this conversation; only 
    This byte-checks the AC→task trace matrix the PLAN DoD promises: every SPEC `AC-N` must appear in
    some task's `covers=[…]` or be recorded under `## Coverage gaps`, and every id inside a `covers=[…]`
    must be a real SPEC AC. A violation means **fix the PLAN** — add the covering task or an explicit
-   Coverage-gaps entry, never silently drop the criterion. No INTENT.md (a standalone plan with no
+   Coverage-gaps entry, never silently drop the criterion. The same command also byte-checks the D-join:
+   every INTENT `## Decisions` `D<N>` must appear as a token in SPEC.md or PLAN.md. A `D<N>` violation
+   means the decision was never carried forward — reflect it in the SPEC (a Constraints/scope line
+   citing `D<N>`; route back to `/devloop:spec` if the SPEC must change) or, when it's genuinely
+   plan-level, cite the `D<N>` in the relevant task line. No INTENT.md (a standalone plan with no
    discuss stage) → skip the command; the driver path always has one, so the gate runs there.
 
 ## Handoff

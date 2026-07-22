@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // devloop intent-lint — deterministic lint for the INTENT.md / ASSUMPTIONS.md / RESEARCH.md / SPEC.md
-// artifact contract (docs/ARTIFACTS.md → the matching `## <FILE>` sections). First arg is the INTENT.md
+// artifact contracts (skills/discuss/references/{INTENT,ASSUMPTIONS}.md, skills/research/references/RESEARCH.md,
+// skills/spec/references/SPEC.md). First arg is the INTENT.md
 // path; the sibling files are derived as `dirname(intent)/<FILE>`. Checks the byte-checkable rules the
 // schemas pin — no semantic judgment:
 //   • the 13 INTENT/ASSUMPTIONS rules (Goal/Coverage/Questions/Answers shape + the ASSUMPTIONS

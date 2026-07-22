@@ -15,8 +15,8 @@ before believing any "X is done / pending" claim.
 
 ### 2. Explore the real files before designing
 Read the actual artifacts the plan will touch and the closest *cousin* already built (e.g. read
-`agents/verifier.md` as the model for a hook's logic, `docs/ARTIFACTS.md` for the schema the code
-parses). Design **inline** when you already hold the context — do **not** spawn a cold Plan/Explore
+`agents/verifier.md` as the model for a hook's logic, the artifact's `skills/<stage>/references/`
+contract — via the `docs/ARTIFACTS.md` index — for the schema the code parses). Design **inline** when you already hold the context — do **not** spawn a cold Plan/Explore
 agent that re-derives what you know; that's the expensive path. Spawn an agent only for the one job
 that needs *fresh, uncontaminated* context: the plan review (step 4).
 

@@ -80,7 +80,7 @@ task's `covers=`. One row per AC → covering task(s) → mapped/unmapped; **evi
 ## Write VERIFY.md
 
 Write `specs/<slug>/VERIFY.md` in the exact schema and pass its Definition of Done — both defined in
-`${CLAUDE_PLUGIN_ROOT}/docs/ARTIFACTS.md` (the VERIFY.md section). Header: `# Verify: <feature> (stage=…)`.
+`${CLAUDE_PLUGIN_ROOT}/skills/verify/references/VERIFY.md`. Header: `# Verify: <feature> (stage=…)`.
 That file is the single source of truth for the format; follow it rather than improvising sections.
 Apply its verdict rules:
 

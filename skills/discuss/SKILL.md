@@ -70,8 +70,8 @@ detection is never biased by the effort of answering.
      Q&A round. The coverage record is the point; all-filtered is not all-Clear.
    - **Questions survived** → write INTENT (Goal, Coverage, Questions) now, before any answering.
 
-   Write to the exact schemas in `${CLAUDE_PLUGIN_ROOT}/docs/ARTIFACTS.md` (the INTENT.md and
-   ASSUMPTIONS.md sections) — that file is the single source of truth for both formats.
+   Write to the exact schemas in `${CLAUDE_PLUGIN_ROOT}/skills/discuss/references/INTENT.md` and
+   `${CLAUDE_PLUGIN_ROOT}/skills/discuss/references/ASSUMPTIONS.md` — the single source of truth for both formats.
 
    **A re-gate discovery lands in one of two shapes** (both recorded in this same Phase-1 write).
    **Dedup first:** a discovery whose fact is already recorded in the ledger — as a `Q<N>`, an

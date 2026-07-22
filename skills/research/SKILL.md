@@ -51,7 +51,7 @@ finding no question asked for is a defect, not a bonus.
    lines; they do not write files.
 
 6. **Merge into `specs/<slug>/RESEARCH.md`** per the exact schema in
-   `${CLAUDE_PLUGIN_ROOT}/docs/ARTIFACTS.md` (the RESEARCH.md section — that file is the single
+   `${CLAUDE_PLUGIN_ROOT}/skills/research/references/RESEARCH.md` (the single
    source of truth for the format, including the source-goes-last ` — ` rule). Create the file
    with its `(mode=…)` header when absent; otherwise insert new lines **section-targeted** —
    findings at the end of `## Findings`, unanswered at the end of `## Unanswered` — never a bare

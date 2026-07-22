@@ -58,8 +58,8 @@ supports.
 
 ## Return format (exact — the skill merges these lines mechanically)
 
-Return only these two labeled blocks (either may be empty), each line in the exact ARTIFACTS.md
-RESEARCH schema shape:
+Return only these two labeled blocks (either may be empty), each line in the exact
+`${CLAUDE_PLUGIN_ROOT}/skills/research/references/RESEARCH.md` schema shape:
 
 ```
 FINDINGS:

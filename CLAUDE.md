@@ -3,7 +3,7 @@
 Guidance for Claude Code when working in this repo. This file is a **router, not a dump** — it stays lean and points to detail on demand (devloop dogfoods its own doc-authoring invariant).
 
 ## What this is
-devloop is a Claude Code plugin that runs an autonomous **spec-driven, test-driven** SDLC pipeline: `discuss → research → SPEC → plan → implement → verify → ship`, with a cross-cutting `doctor` and an advisory `review` lane. Design rationale and full architecture: **`docs/ARCHITECTURE.md`** (read it before changing pipeline stages, gates, or the agent/skill layout). Stage-transition artifact formats (the single source of truth every stage reads/writes against): **`docs/ARTIFACTS.md`**.
+devloop is a Claude Code plugin that runs an autonomous **spec-driven, test-driven** SDLC pipeline: `discuss → research → SPEC → plan → implement → verify → ship`, with a cross-cutting `doctor` and an advisory `review` lane. Design rationale and full architecture: **`docs/ARCHITECTURE.md`** (read it before changing pipeline stages, gates, or the agent/skill layout). Stage-transition artifact formats live with their writer stage in `skills/<stage>/references/<ARTIFACT>.md` (writer-owns), indexed by **`docs/ARTIFACTS.md`** — the thin artifact→contract-file→purpose table + shared format philosophy.
 
 ## Working here
 - **Author with `plugin-dev`** — the toolkit for every component: its `skill-`/`agent-`/`hook-`/`command-development`, `mcp-integration`, `plugin-settings` skills, or the `agent-creator` agent; **validate** with `plugin-validator`. Use `skill-creator` only to benchmark a skill's quality, not to author. Don't hand-roll these.

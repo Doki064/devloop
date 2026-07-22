@@ -28,7 +28,7 @@ this feature's bounded set — never the whole project:
   every entry goes into the PR body for human confirmation, `[irreversible]` entries first. Absent
   file = no assumptions were taken.
 
-The VERIFY.md format is defined in `${CLAUDE_PLUGIN_ROOT}/docs/ARTIFACTS.md` (the VERIFY.md section);
+The VERIFY.md format is defined in `${CLAUDE_PLUGIN_ROOT}/skills/verify/references/VERIFY.md`;
 read the verdict and rows against that schema rather than guessing.
 
 ## Process
@@ -75,7 +75,8 @@ read the verdict and rows against that schema rather than guessing.
      - a `## Manual checks` checklist of the `MANUAL` named-hole rows (omit the section if none);
      - an `## Assumptions` section surfacing every `specs/<slug>/ASSUMPTIONS.md` entry verbatim,
        `[irreversible]` entries first (omit the section when the file is absent) — the human confirms
-       or vetoes the autonomous defaults here, per the ASSUMPTIONS contract in ARTIFACTS.md;
+       or vetoes the autonomous defaults here, per the ASSUMPTIONS contract in
+       `${CLAUDE_PLUGIN_ROOT}/skills/discuss/references/ASSUMPTIONS.md`;
      - a link to `specs/<slug>/SPEC.md`.
 
 7. **Mark shipped + clear the active pointer** (only after the push/PR of step 5–6 succeeds — a failed

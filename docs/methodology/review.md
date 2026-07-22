@@ -11,7 +11,7 @@ findings, fixes for the substantive ones, re-validation, focused commits, memory
    files on disk. Is it committed or uncommitted? Which commits are the slice? Did those commits touch
    *other* stages too (they often do — check the diff stat)?
 1. **Read the sources of truth, in order** (deepest wins): the design log (`docs/ARCHITECTURE.md`) →
-   `docs/ARTIFACTS.md` (the artifact contract the slice reads/writes) → `CLAUDE.md` → the project's
+   `docs/ARTIFACTS.md` (the artifact index → the slice's `skills/<stage>/references/` contract it reads/writes) → `CLAUDE.md` → the project's
    persisted memory notes (project conventions + prior-feedback rules). **Also read the
    sibling/template slice** (the closest cousin — e.g. verify is the template for parameterized
    skill→agent stages) **and every file the slice's contract touches cross-stage.**

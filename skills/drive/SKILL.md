@@ -109,6 +109,7 @@ is a cheap secondary guard for the case doctor was unavailable or degraded). Do 
 4. **plan→implement seam** (the wiring this stage adds) — a **convergence-terminated re-plan loop**
    wrapping the mechanical plan-verify gate and the advisory plan-review. Track `prev_count = -1` as loop
    state. Each iteration:
+   <!-- DEFERRED(Phase 3): route a spec-invalidating REGATE surfaced by re-plan out of this loop (drive-integration slice). -->
    1. **plan-verify** — `verify` skill with `stage=plan`, the mechanical coverage check. **This gates:**
       an orphan-requirement / coverage BLOCK stops the run **before implement** — surface the BLOCK rows
       and stop. Do **not** drop `plan.done` here (see the terminal below): a per-iteration drop on PASS
@@ -168,6 +169,7 @@ is a cheap secondary guard for the case doctor was unavailable or degraded). Do 
        coverage/plan gap it must not paper over): clear the marker (`rm -f .devloop/heal-active`) and
        **early-exit**, reporting the gap as **re-plan territory** (distinct from a no-progress abort).
        Do not re-verify.
+       <!-- DEFERRED(Phase 3): tier-route the stop-and-surface early-exit on the REGATE line (plan-only → replan, spec-invalidating → discuss re-entry incl. stale .done marker invalidation) — drive-integration slice. -->
     3. **Disarm the guard** — `rm -f .devloop/heal-active`, on **every** path out of the attempt
        (normal and error), so a later standalone `implement` never inherits a stale freeze.
     4. **Re-verify** — invoke `verify stage=impl` again; recompute the failing set from the new

@@ -16,20 +16,27 @@ context hygiene — the detailed reasoning stays out of this conversation; only 
 
 1. **Slugify** the feature name you were given (lowercase, hyphens) → `<slug>`. Parse an optional
    **`replan`** token from the arguments (the driver's plan-review→re-plan loop passes it when
-   REVIEW.md findings warrant a revised plan); absent by default → a normal first plan.
+   REVIEW.md findings warrant a revised plan; a re-gate re-entry passes it with a discovery text);
+   absent by default → a normal first plan. Keep any **discovery text** stated alongside `replan` —
+   step 3 forwards it to the agent as a finding source.
 
 2. **Check the precondition.** Confirm `specs/<slug>/SPEC.md` exists. If it does not, stop and tell
    the user to run `/devloop:spec <feature-name>` first — plan requires a contract to plan against.
 
-3. **Dispatch the `planner` agent** via Task, passing `<slug>` **and the `replan` token if present**.
-   The agent reads its own bounded working set (SPEC + CONSTITUTION + ROADMAP + dependency SPECs — plus
-   `REVIEW.md` in re-plan mode) and writes `specs/<slug>/PLAN.md`. Do not read the SPEC or draft tasks
-   in this context — let the agent own that.
+3. **Dispatch the `planner` agent** via Task, passing `<slug>` **and the `replan` token if present**,
+   **plus any discovery text stated with it** (the agent treats REVIEW.md and/or the discovery as
+   its finding sources). The agent reads its own bounded working set (SPEC +
+   CONSTITUTION + ROADMAP + dependency SPECs — plus `REVIEW.md` in re-plan mode when present) and writes
+   `specs/<slug>/PLAN.md`. Do not read the SPEC or draft tasks in this context — let the agent own that.
 
-4. **On return, check the result.** Confirm `specs/<slug>/PLAN.md` exists and surface the agent's
-   summary (task count, tdd/standard split, any coverage gaps or risks). If the agent reported a
-   **coverage gap** (a SPEC criterion no task covers), stop and surface it — an orphan requirement is
-   a BLOCK, not something to paper over.
+4. **On return, check the result.** If the agent returned a **`REGATE spec-invalidating: …`** line
+   (a finding only a contract change can satisfy — it stopped before emitting a plan), surface it
+   **verbatim** and route: tell the user to run `/devloop:discuss <feature-name>` and include the
+   REGATE line's discovery in the invocation (the planner never emits `REGATE plan-only` — it owns
+   the plan). Otherwise confirm `specs/<slug>/PLAN.md` exists and surface the agent's summary (task
+   count, tdd/standard split, any coverage gaps or risks); if the agent reported a **coverage gap**
+   (a SPEC criterion no task covers), stop and surface it — an orphan requirement is a BLOCK, not
+   something to paper over.
 
 ## Handoff
 

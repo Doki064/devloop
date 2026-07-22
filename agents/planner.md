@@ -30,18 +30,24 @@ Read only what informs this feature — never the whole project:
 - `CONSTITUTION.md` (if present) — the project's non-negotiable principles.
 - `ROADMAP.md` (if present) — this feature's `Boundary` (scope edge) and `depends[]`.
 - The `SPEC.md` of each feature named in `depends[]` — upstream contracts that constrain this plan.
-- `specs/<slug>/REVIEW.md` — **re-plan mode only** (the `replan` token). The plan-review findings you
-  must address; see "Re-plan mode" below.
+- `specs/<slug>/REVIEW.md` — **re-plan mode** (the `replan` token), **when present**. The plan-review
+  findings you must address; a re-gate re-plan may instead carry a discovery in the invocation with no
+  REVIEW.md — see "Re-plan mode" below.
 
 ## Re-plan mode (the `replan` token)
 
-When invoked with `replan`, a prior `PLAN.md` already exists and plan-review wrote `specs/<slug>/REVIEW.md`.
-Read it, then **revise the existing plan to resolve its `## Findings`** — treat each as a defect to fix
-(drift from SPEC intent, over-engineering, a missed implied edge case, an ill-shaped task). Re-emit the
-full `PLAN.md` (same schema/DoD). The `SPEC.md` is still frozen — you address the findings by changing the
-*plan*, never by inventing scope the SPEC doesn't sanction (a finding that can only be met by changing the
-contract is a note in your return summary, not a silent scope add). Making real progress matters: the
-driver loops only while findings **strictly shrink**, so a re-plan that ignores REVIEW.md stalls the loop.
+When invoked with `replan`, a prior `PLAN.md` already exists. **Revise it to resolve the stated
+findings** — treat each as a defect to fix (drift from SPEC intent, over-engineering, a missed implied
+edge case, an ill-shaped task). Findings come from **two sources, either or both**: `specs/<slug>/REVIEW.md`
+when present (the driver's plan-review loop), **and/or a discovery passed in the invocation** (the
+re-gate path — the plan skill forwards the discovery text). With **neither** a REVIEW.md nor a stated
+discovery, there is nothing to re-plan against → **report that and stop; do not guess** (fail closed).
+Re-emit the full `PLAN.md` (same schema/DoD). The `SPEC.md` is still frozen — you address the findings by
+changing the *plan*, never by inventing scope the SPEC doesn't sanction. A finding that can only be met by
+changing the contract is above what the plan owns → **stop and surface** `REGATE spec-invalidating:
+<discovery + evidence (file:line / AC-N)> — <what it invalidates>`, never a silent scope add. Making real
+progress matters: the driver loops only while findings **strictly shrink**, so a re-plan that ignores its
+findings stalls the loop.
 
 ## Write the PLAN
 
@@ -84,7 +90,13 @@ Apply these disciplines while planning:
 
 - **SPEC missing or empty** → do not invent one. Stop and report that spec must run first.
 - **A dependency SPEC is missing** → note it as a risk in your summary; plan what you can, do not block.
-- **A criterion is unmappable** → record it under Coverage gaps (above); do not fabricate a task.
+- **A criterion is unmappable** → record it under Coverage gaps (above); do not fabricate a task. This
+  is plan-verify's BLOCK lane, **not** re-gating — leave it as-is.
+- **The SPEC blocks a faithful plan** (an `AC-N` contradicts reality, another AC, or a dependency
+  contract — an ambiguity no plan can honor) → **stop and surface** `REGATE spec-invalidating:
+  <discovery + evidence (file:line / AC-N)> — <what it invalidates>`, in **either** mode. The planner
+  **never** emits `REGATE plan-only` — it owns the plan, so a plan-tier problem found while planning is
+  just planning (revise the plan and move on).
 
 ## Return
 

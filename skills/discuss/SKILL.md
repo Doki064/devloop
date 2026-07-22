@@ -1,6 +1,6 @@
 ---
 name: discuss
-description: This skill should be used when the user wants to clarify a feature's intent before speccing it in a devloop project — when they say "discuss this feature", "clarify the requirements", "what's unclear about X", "triage this feature", or when a feature idea is too vague to spec without guessing. Records the surviving questions and their answers or assumptions in specs/<slug>/INTENT.md and ASSUMPTIONS.md; an `auto` token in the invocation selects autonomous mode (reversible assumptions instead of questions).
+description: This skill should be used when the user wants to clarify a feature's intent before speccing it in a devloop project — when they say "discuss this feature", "clarify the requirements", "what's unclear about X", "triage this feature", or when a feature idea is too vague to spec without guessing, or when a later pipeline stage surfaces a REGATE spec-invalidating discovery that must be folded back into intent. Records the surviving questions and their answers or assumptions in specs/<slug>/INTENT.md and ASSUMPTIONS.md; an `auto` token in the invocation selects autonomous mode (reversible assumptions instead of questions).
 allowed-tools:
   - Read
   - Write
@@ -29,6 +29,10 @@ only what informs this feature, never the whole project:
 - `ROADMAP.md` if present — this feature's row for its **Boundary** and **depends[]**; a pinned
   boundary is a given, not a question.
 - `CONSTITUTION.md` if present — conventions already decided there are never asked about.
+- **A mid-pipeline discovery stated in the invocation** (a re-gate re-entry: a `REGATE
+  spec-invalidating` discovery a later stage surfaced and the user forwarded here) — treat it as
+  **triage evidence** and walk the taxonomy against it like any other input. It is ledger material by
+  definition (the blocklist carve-out below); recording it is the point.
 
 **Mode:** an `auto` token in the invocation (mirroring implement's `heal`/`replan` convention)
 selects autonomous mode. Token absent → interactive.
@@ -48,7 +52,8 @@ detection is never biased by the effort of answering.
      intent; questions needing investigation get `route=research`; otherwise assume.
    - **Blocklist** — never ask: stack/tooling choices CONSTITUTION or ROADMAP already pins;
      preferences with a platform default (record as an ASSUMPTIONS `(—)` entry instead); anything
-     answerable by reading the repo.
+     answerable by reading the repo. **Carve-out:** a discovery stated in the invocation (a re-gate
+     re-entry) is ledger material — never dropped as "answerable by reading the repo".
    - **Affects-filter** — a question that changes no named downstream artifact (`SPEC`, `PLAN`, a
      section like `SPEC.AC`) is dropped or assumed.
    - **Dedup** — no two questions with the same `split=`.
@@ -68,25 +73,47 @@ detection is never biased by the effort of answering.
    Write to the exact schemas in `${CLAUDE_PLUGIN_ROOT}/docs/ARTIFACTS.md` (the INTENT.md and
    ASSUMPTIONS.md sections) — that file is the single source of truth for both formats.
 
+   **A re-gate discovery lands in one of two shapes** (both recorded in this same Phase-1 write):
+   - **Open-question discovery** (the discovery opens a genuine gap) → draft it as a normal `Q<N>`
+     (route=user or route=research per answerability); Phase 2 resolves it like any other question.
+   - **Determined correction** (the discoverer supplied the evidence; nothing is open) → still write
+     the `Q<N>` — `route=user` (the user is the veto surface), `split="<what SPEC assumed> vs <what
+     was found>"` — **and immediately
+     append its `## Answers` entry citing that evidence, in this same write**. Evidence is an Answer,
+     never an ASSUMPTIONS entry (assumptions are chosen defaults, evidence is settled fact).
+   - **At the cap** (ledger already holds 10 Qs): an **open-question** discovery takes the existing
+     drop-or-assume valve (an ASSUMPTIONS entry or a Coverage drop-note). A **determined correction**
+     can be neither `Q11` (the lint's hard bound) nor an `A<N>` (evidence is not an assumption) nor
+     dropped (proceeding against a known-wrong SPEC is the failure a re-gate exists to prevent) — its
+     landing is the **Coverage drop-note carrying the fact + evidence**, and the handoff routes to spec
+     revision (spec reads the whole INTENT, Coverage included).
+
 4. **Self-check after every write:**
    `node ${CLAUDE_PLUGIN_ROOT}/scripts/intent-lint.mjs specs/<slug>/INTENT.md` — exit 0 or fix the
    printed violations and re-run before moving on.
 
 ## Phase 2 — resolve the route=user questions
 
-**Interactive (default).** Batch every `route=user` question into ONE AskUserQuestion round — ≤4
-questions per call, chunked into consecutive calls when more survive; use each question's `split=`
-readings as the options. Append the answers as `## Answers` entries (`- **Q<N>**: <answer>`).
-Zero `route=user` questions (all routed to research) → no round at all: the INTENT stands and the
-handoff goes to research.
+**Skip-guard (both modes).** Never re-ask (interactive) or re-assume (autonomous) a `route=user`
+question that **already carries a `## Answers` entry** — a determined correction seeds its Answer at
+triage time (Phase 1), and re-answering it would duplicate a settled answer. In attended mode, the
+closing summary instead **surfaces each such recorded correction for veto** rather than re-asking it.
+
+**Interactive (default).** Batch every **unanswered** `route=user` question into ONE AskUserQuestion
+round — ≤4 questions per call, chunked into consecutive calls when more survive; use each question's
+`split=` readings as the options. Append the answers as `## Answers` entries (`- **Q<N>**: <answer>`).
+Zero unanswered `route=user` questions (all routed to research, or already carrying Answers) → no round
+at all: the INTENT stands; the Handoff below picks the destination.
 
 **Autonomous degrade.** Trigger: the `auto` token; or AskUserQuestion absent from the available
 tools (a call returns `No such tool available: AskUserQuestion`); or the user declines to answer.
-Then self-answer each `route=user` question: choose the **reversible** reading as the default and
-append an ASSUMPTIONS entry — `- **A<N>** (Q<N>): assume <chosen>, not <rejected> — <one-line
-basis>. affects=<artifact>` — propagating `[irreversible]` from the linked question per the schema
-DoD. A-numbering is append-only. **Never self-answer a `route=research` question** — those stay
-open for the research stage regardless of mode.
+Then self-answer each **unanswered** `route=user` question: choose the **reversible** reading as the
+default and append an ASSUMPTIONS entry — `- **A<N>** (Q<N>): assume <chosen>, not <rejected> —
+<one-line basis>. affects=<artifact>` — propagating `[irreversible]` from the linked question per the
+schema DoD. A-numbering is append-only. **Skip any `route=user` question that already carries a
+`## Answers` entry** (per the skip-guard above) — self-answering it would write a duplicate `A<N>` for
+a settled answer. **Never self-answer a `route=research` question** — those stay open for the research
+stage regardless of mode.
 
 Re-run the Phase 1 lint command after every INTENT or ASSUMPTIONS write — the same INTENT-path
 invocation also checks the ASSUMPTIONS sibling — and fix violations before handing off.
@@ -97,5 +124,5 @@ State the next step: unresolved `route=research` questions remain → `/devloop:
 <feature-name>`; none → `/devloop:spec <feature-name>` (all-Clear also goes to spec). Tell the
 user to run `/clear` (or start a new session) for fresh context before the next command.
 
-Summarize: questions asked, answers recorded, assumptions taken (call out `[irreversible]` ones
-first), and what research must answer.
+Summarize: questions asked, answers recorded, recorded determined corrections awaiting veto,
+assumptions taken (call out `[irreversible]` ones first), and what research must answer.

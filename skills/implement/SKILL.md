@@ -30,10 +30,17 @@ hygiene — the detailed edit-by-edit reasoning stays out of this conversation; 
 4. **On return, check the result.** Surface the agent's summary (tasks completed, tdd/standard split,
    commits, any risks). If the agent reports a task it could **not** drive to GREEN — or a test
    command that errors — stop and surface it; a failed task is a BLOCK, not something to paper over.
+   If instead the agent returned a **`REGATE <spec-invalidating|plan-only>: …`** line, surface it
+   **verbatim** and route by tier: `spec-invalidating` → tell the user to run `/devloop:discuss
+   <feature-name>` and include the discovery text in the invocation; `plan-only` → tell the user to
+   run `/devloop:plan <feature-name> replan` and include the discovery text. The discovery re-enters the pipeline there — do not attempt
+   to build past it here.
 
 ## Handoff
 
 State the next step: `/devloop:verify <feature-name>` (or continue via the driver). Each `tdd` task's
 `test(scope)→feat(scope)` commit pair is the evidence verify checks against the PLAN's `scope=` tokens.
+**A REGATE return (step 4) supersedes this handoff** — the next step is the tier's re-entry command
+(`/devloop:discuss` or `/devloop:plan … replan`) with the discovery text, not verify.
 Standalone only (skip under the driver): tell the user to run `/clear` (or start a new session) for
 fresh context before running verify.

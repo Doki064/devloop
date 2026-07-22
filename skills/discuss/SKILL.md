@@ -73,7 +73,10 @@ detection is never biased by the effort of answering.
    Write to the exact schemas in `${CLAUDE_PLUGIN_ROOT}/docs/ARTIFACTS.md` (the INTENT.md and
    ASSUMPTIONS.md sections) — that file is the single source of truth for both formats.
 
-   **A re-gate discovery lands in one of two shapes** (both recorded in this same Phase-1 write):
+   **A re-gate discovery lands in one of two shapes** (both recorded in this same Phase-1 write).
+   **Dedup first:** a discovery whose fact is already recorded in the ledger — as a `Q<N>`, an
+   `## Answers` entry, or a prior Coverage landing — is a duplicate: write **nothing** for it (the
+   driver's re-gate no-progress bound depends on this). Otherwise:
    - **Open-question discovery** (the discovery opens a genuine gap) → draft it as a normal `Q<N>`
      (route=user or route=research per answerability); Phase 2 resolves it like any other question.
    - **Determined correction** (the discoverer supplied the evidence; nothing is open) → still write
@@ -121,8 +124,9 @@ invocation also checks the ASSUMPTIONS sibling — and fix violations before han
 ## Handoff
 
 State the next step: unresolved `route=research` questions remain → `/devloop:research
-<feature-name>`; none → `/devloop:spec <feature-name>` (all-Clear also goes to spec). Tell the
-user to run `/clear` (or start a new session) for fresh context before the next command.
+<feature-name>`; none → `/devloop:spec <feature-name>` (all-Clear also goes to spec). Standalone only
+(skip under the driver): tell the user to run `/clear` (or start a new session) for fresh context
+before the next devloop command.
 
 Summarize: questions asked, answers recorded, recorded determined corrections awaiting veto,
 assumptions taken (call out `[irreversible]` ones first), and what research must answer.

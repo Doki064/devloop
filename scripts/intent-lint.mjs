@@ -9,23 +9,27 @@
 //   • the RESEARCH.md sibling rules (header mode, Q-id-per-entry, no cross-section duplicate Q,
 //     confidence tags, source shape, greenfield-URL, Unanswered risk:), and
 //   • the stage=spec duplicate-AC-N rule (SPEC.md's ## Acceptance criteria section only: two or
-//     more bullets carrying the same **AC-<N>** ID → one violation per duplicated ID).
+//     more bullets carrying the same **AC-<N>** ID → one violation per duplicated ID), and
+//   • the stage=plan coverage rules (every SPEC **AC-N** appears in some PLAN task's `covers=[…]`
+//     or under PLAN's ## Coverage gaps; every id inside a `covers=[…]` is a real SPEC AC).
 // SOURCE PARSE: a RESEARCH finding's source is the segment after the LINE's LAST ` — ` (answer prose may
 // contain interior spaced em dashes — use lastIndexOf/split().pop(), never split()[1]). The ASSUMPTIONS
 // basis rule keeps its FIRST-split semantics (pre-existing, documented, unchanged).
 //
-// STAGE TOKEN (optional 2nd positional `stage=research|stage=spec`; anything else → usage/exit 1): each
-// terminal Q-join fires only for the stage that owns satisfying it. Rationale: discuss may re-run and add
-// new Qs after RESEARCH/SPEC already exist; a presence-gated join would wedge discuss's self-check loop on
-// files it doesn't own, so the RESEARCH/SPEC coverage joins are gated to their owning stage, not to file
-// presence. The RESEARCH entry-shape rules above stay presence-gated (RESEARCH exists → check).
+// STAGE TOKEN (optional 2nd positional `stage=research|stage=spec|stage=plan`; anything else → usage/exit
+// 1): each terminal join fires only for the stage that owns satisfying it. Rationale: discuss may re-run
+// and add new Qs after RESEARCH/SPEC already exist; a presence-gated join would wedge discuss's self-check
+// loop on files it doesn't own, so the RESEARCH/SPEC/PLAN joins are gated to their owning stage, not to
+// file presence. The RESEARCH entry-shape rules above stay presence-gated (RESEARCH exists → check). The
+// stage=plan gate reads PLAN + SPEC (both required inputs) to check the AC→task trace matrix.
 //
 // EXIT-CODE DEVIATION from the sibling scripts (which exit 0 and print a verdict): this is a GATE, so it
 // exits by outcome, not by "did I run" — 0 clean, 1 on any violation OR a missing INTENT.md OR a usage
 // error; NEVER 2. A hook/CI can chain it on exit code without parsing stdout. Crucially a MISSING
 // INTENT.md is exit 1 (`missing file` message), not a clean pass — a lint that passes on absent input
 // lets a broken write look green. Absent siblings are a clean skip when optional; when a stage token
-// requires the file it owns (research→RESEARCH, spec→SPEC), an absent file is a `missing file` violation.
+// requires the file(s) it reads (research→RESEARCH, spec→SPEC, plan→PLAN+SPEC), an absent file is a
+// `missing file` violation.
 import fs from 'node:fs';
 import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -82,6 +86,19 @@ function tryRead(path) {
 function entryQid(line) {
   const m = line.match(/\*\*Q(\d+)\*\*/);
   return m ? `Q${m[1]}` : null;
+}
+
+// Bolded **AC-N** ids inside SPEC.md's `## Acceptance criteria`, in order, with repeats. The single
+// AC-extraction the stage=spec dup-check and the stage=plan coverage-check both read: only the
+// `**AC-N**` bullet form counts, so unbolded `(was AC-N)` withdraw notes and indented `e.g.` /
+// `(amended: …)` sub-lines are invisible here, exactly as they are to every other AC consumer.
+function specAcIds(specText) {
+  const ids = [];
+  for (const line of section(specText.split(/\r?\n/), '## Acceptance criteria') || []) {
+    const m = line.match(/\*\*AC-(\d+)\*\*/);
+    if (m) ids.push(`AC-${m[1]}`);
+  }
+  return ids;
 }
 
 // Returns the violations array (empty = clean). The missing-INTENT case is distinguishable: a single
@@ -273,12 +290,8 @@ export function lint(intentPath, stage) {
     } else {
       // Rule S1: no duplicate AC-N within ## Acceptance criteria (section-scoped — a withdrawn
       // `(was AC-N)` note under ## Out of scope, or unbolded prose elsewhere, must not count).
-      const acSection = section(specText.split(/\r?\n/), '## Acceptance criteria') || [];
       const acCounts = new Map();
-      for (const line of acSection) {
-        const m = line.match(/\*\*AC-(\d+)\*\*/);
-        if (!m) continue;
-        const acid = `AC-${m[1]}`;
+      for (const acid of specAcIds(specText)) {
         acCounts.set(acid, (acCounts.get(acid) || 0) + 1);
       }
       for (const [acid, count] of acCounts) {
@@ -293,12 +306,57 @@ export function lint(intentPath, stage) {
         }
       }
     }
+  } else if (stage === 'plan') {
+    // Plan-exit trace matrix: PLAN's tasks must cover every SPEC AC, and cite no phantom AC. Both files
+    // are required inputs of this gate — an absent one is a `missing file` violation (mirrors the owned-
+    // file semantics of stage=research/spec; a clean skip would let a broken plan/spec look green).
+    const planPath = join(dir, 'PLAN.md');
+    const specPath = join(dir, 'SPEC.md');
+    const planText = tryRead(planPath);
+    const specText = tryRead(specPath);
+    if (planText === null) violations.push(`${planPath}: missing file`);
+    if (specText === null) violations.push(`${specPath}: missing file`);
+    if (planText !== null && specText !== null) {
+      const specAcs = new Set(specAcIds(specText));
+      const planLines = planText.split(/\r?\n/);
+
+      // Every `covers=[AC-1, AC-2]` id across all tasks (tolerant of interior whitespace).
+      const covered = new Set();
+      for (const line of planLines) {
+        const m = line.match(/covers=\[([^\]]*)\]/);
+        if (!m) continue;
+        for (const raw of m[1].split(',')) {
+          const id = raw.trim();
+          if (/^AC-\d+$/.test(id)) covered.add(id);
+        }
+      }
+
+      // ACs explicitly parked under ## Coverage gaps (an accepted, recorded non-mapping).
+      const gaps = new Set();
+      for (const line of section(planLines, '## Coverage gaps') || []) {
+        for (const m of line.matchAll(/\bAC-(\d+)\b/g)) gaps.add(`AC-${m[1]}`);
+      }
+
+      // coverage: every SPEC AC appears in some task's covers=[] or is parked under ## Coverage gaps.
+      for (const acid of specAcs) {
+        if (!covered.has(acid) && !gaps.has(acid)) {
+          violations.push(`PLAN.md: ${acid} is uncovered — in no task's covers=[] and not under ## Coverage gaps`);
+        }
+      }
+
+      // dangling-covers: every covers=[] id exists as a bolded AC in SPEC ## Acceptance criteria.
+      for (const acid of covered) {
+        if (!specAcs.has(acid)) {
+          violations.push(`PLAN.md: covers= cites ${acid} not in SPEC ## Acceptance criteria`);
+        }
+      }
+    }
   }
 
   return violations;
 }
 
-const USAGE = 'usage: intent-lint.mjs <path-to-INTENT.md> [stage=research|stage=spec]';
+const USAGE = 'usage: intent-lint.mjs <path-to-INTENT.md> [stage=research|stage=spec|stage=plan]';
 
 function main() {
   const [intentPath, stageArg] = process.argv.slice(2); // extra argv beyond the stage token is ignored
@@ -308,7 +366,7 @@ function main() {
   }
   let stage;
   if (stageArg !== undefined) {
-    const m = stageArg.match(/^stage=(research|spec)$/);
+    const m = stageArg.match(/^stage=(research|spec|plan)$/);
     if (!m) {
       console.log(USAGE);
       process.exit(1);

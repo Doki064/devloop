@@ -38,7 +38,7 @@ scope the TDD hook matches, e.g. `test(auth)`→`feat(auth)`) · `deps=[T-ids]` 
 marker · `covers=[AC-ids]` for the trace matrix.
 
 **Definition of Done:**
-- [ ] Every SPEC `AC-N` appears in some task's `covers=` (else listed under Coverage gaps).
+- [ ] Every SPEC `AC-N` appears in some task's `covers=` (else listed under Coverage gaps), and every `covers=` id is a real SPEC `AC-N` (byte-checked: `intent-lint … stage=plan`).
 - [ ] Every `tdd` task has a `scope=` token; deps are acyclic and reference real `T<N>` ids.
 - [ ] Constitution check is PASS.
 - [ ] Each Complexity-tracking entry has a justification (empty section is the good case).

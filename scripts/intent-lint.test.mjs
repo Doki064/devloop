@@ -69,8 +69,8 @@ function run(intent, assumptions) {
   }
 }
 
-// Run lint over an arbitrary sibling set. files = {intent, assumptions?, research?, spec?}; null/absent
-// keys are simply not written. Optional stage token is passed through to lint().
+// Run lint over an arbitrary sibling set. files = {intent, assumptions?, research?, spec?, plan?};
+// null/absent keys are simply not written. Optional stage token is passed through to lint().
 function runTrio(files, stage) {
   const work = mkwork();
   try {
@@ -78,6 +78,7 @@ function runTrio(files, stage) {
     if (files.assumptions != null) fs.writeFileSync(join(work, 'ASSUMPTIONS.md'), files.assumptions);
     if (files.research != null) fs.writeFileSync(join(work, 'RESEARCH.md'), files.research);
     if (files.spec != null) fs.writeFileSync(join(work, 'SPEC.md'), files.spec);
+    if (files.plan != null) fs.writeFileSync(join(work, 'PLAN.md'), files.plan);
     return lint(join(work, 'INTENT.md'), stage);
   } finally {
     fs.rmSync(work, { recursive: true, force: true });
@@ -510,6 +511,102 @@ check('stage=spec dup-AC: AC-1..AC-3 all unique -> clean', () => {
   assert.deepStrictEqual(v, [], `expected clean, got:\n${v.join('\n')}`);
 });
 
+// ============================================================================
+// stage=plan: AC→task coverage trace matrix (framework-steal decision 2)
+// ============================================================================
+
+// An empty-Questions INTENT that lints clean on its own — the plan-stage arms care only about
+// SPEC↔PLAN, so the INTENT contributes zero base violations.
+const PLAN_INTENT = minimalIntent('', '');
+const PLAN_SPEC = '# Spec: export\n\n## Acceptance criteria\n'
+  + '- **AC-1** [truth]: WHEN x THE SYSTEM SHALL y\n'
+  + '- **AC-2** [artifact]: THE SYSTEM SHALL z\n'
+  + '- **AC-3** [truth]: IF c THEN THE SYSTEM SHALL w\n';
+
+function planFixture(plan, spec = PLAN_SPEC) {
+  return runTrio({ intent: PLAN_INTENT, spec, plan }, 'plan');
+}
+
+// pass: every SPEC AC lands in some task's covers=[] (parse tolerant of interior whitespace).
+check('stage=plan: all ACs covered by covers=[] -> clean', () => {
+  const plan = '# Plan: export\n\n## Tasks\n'
+    + '- **T1** [tdd] scope=`a` deps=[] covers=[AC-1, AC-2]: build core\n'
+    + '- **T2** [standard] scope=`b` deps=[] covers=[AC-3]: wire config\n\n'
+    + '## Coverage gaps\nnone\n';
+  assert.deepStrictEqual(planFixture(plan), [], `expected clean, got:\n${planFixture(plan).join('\n')}`);
+});
+
+// coverage: an AC in no covers= and no Coverage gaps -> violation. SAME bytes bare (no stage) must NOT
+// fire the plan join (wedge guard — mirrors the dup-AC bare/research guard).
+check('stage=plan coverage: AC-3 uncovered -> violation; bare invocation untouched', () => {
+  const plan = '# Plan: export\n\n## Tasks\n'
+    + '- **T1** [tdd] scope=`a` deps=[] covers=[AC-1,AC-2]: build core\n';
+  const files = { intent: PLAN_INTENT, spec: PLAN_SPEC, plan };
+  const v = runTrio(files, 'plan');
+  assert.ok(has(v, 'AC-3 is uncovered'), `expected an AC-3 coverage violation, got:\n${v.join('\n')}`);
+  assert.strictEqual(v.length, 1, `expected only the AC-3 violation, got:\n${v.join('\n')}`);
+  assert.deepStrictEqual(runTrio(files), [], 'bare invocation must not fire the plan join');
+});
+
+// coverage: an uncovered AC explicitly parked under ## Coverage gaps -> clean (recorded non-mapping).
+check('stage=plan coverage: AC-3 parked under ## Coverage gaps -> clean', () => {
+  const plan = '# Plan: export\n\n## Tasks\n'
+    + '- **T1** [tdd] scope=`a` deps=[] covers=[AC-1,AC-2]: build core\n\n'
+    + '## Coverage gaps\n- AC-3: needs a human UX judgment; no automatable task\n';
+  assert.deepStrictEqual(planFixture(plan), [], `expected clean, got:\n${planFixture(plan).join('\n')}`);
+});
+
+// dangling-covers: a covers= id with no matching bolded SPEC AC -> violation (corrupt trace matrix).
+check('stage=plan dangling-covers: covers=[AC-9] with no such SPEC AC -> violation', () => {
+  const plan = '# Plan: export\n\n## Tasks\n'
+    + '- **T1** [tdd] scope=`a` deps=[] covers=[AC-1,AC-2]: build core\n'
+    + '- **T2** [standard] scope=`b` deps=[] covers=[AC-3,AC-9]: wire config\n';
+  const v = planFixture(plan);
+  assert.ok(has(v, 'covers= cites AC-9'), `expected an AC-9 dangling-covers violation, got:\n${v.join('\n')}`);
+  assert.strictEqual(v.length, 1, `expected only the AC-9 violation, got:\n${v.join('\n')}`);
+});
+
+// A withdrawn `(was AC-3)` note under ## Out of scope is not a live AC: coverage does not require it,
+// and citing it in covers= is a dangling reference (it is not a bolded **AC-3** in Acceptance criteria).
+const WITHDRAWN_SPEC = '# Spec: export\n\n## Acceptance criteria\n'
+  + '- **AC-1** [truth]: WHEN x THE SYSTEM SHALL y\n'
+  + '- **AC-2** [artifact]: THE SYSTEM SHALL z\n\n'
+  + '## Out of scope\n- (was AC-3) dropped after the re-gate\n';
+
+check('stage=plan: withdrawn (was AC-3) not required in covers= -> clean', () => {
+  const plan = '# Plan: export\n\n## Tasks\n'
+    + '- **T1** [tdd] scope=`a` deps=[] covers=[AC-1,AC-2]: build core\n';
+  assert.deepStrictEqual(planFixture(plan, WITHDRAWN_SPEC), [], `expected clean, got:\n${planFixture(plan, WITHDRAWN_SPEC).join('\n')}`);
+});
+
+check('stage=plan: covers= citing withdrawn (was AC-3) -> dangling violation', () => {
+  const plan = '# Plan: export\n\n## Tasks\n'
+    + '- **T1** [tdd] scope=`a` deps=[] covers=[AC-1,AC-2,AC-3]: build core\n';
+  const v = planFixture(plan, WITHDRAWN_SPEC);
+  assert.ok(has(v, 'covers= cites AC-3'), `expected an AC-3 dangling-covers violation, got:\n${v.join('\n')}`);
+  assert.strictEqual(v.length, 1, `expected only the AC-3 dangling violation, got:\n${v.join('\n')}`);
+});
+
+// An indented `e.g.` sub-line under an AC (spec-by-example rider) is not itself an AC — it must not
+// inflate the required-coverage set (kills a scan that treats any AC-section line as a criterion).
+check('stage=plan: indented e.g. sub-line under an AC is not a criterion -> clean', () => {
+  const spec = '# Spec: export\n\n## Acceptance criteria\n'
+    + '- **AC-1** [truth]: WHEN x THE SYSTEM SHALL y\n'
+    + '  - e.g. WHEN the input is empty THE SYSTEM SHALL return []\n'
+    + '- **AC-2** [artifact]: THE SYSTEM SHALL z\n';
+  const plan = '# Plan: export\n\n## Tasks\n'
+    + '- **T1** [tdd] scope=`a` deps=[] covers=[AC-1,AC-2]: build core\n';
+  assert.deepStrictEqual(planFixture(plan, spec), [], `expected clean, got:\n${planFixture(plan, spec).join('\n')}`);
+});
+
+// stage=plan required inputs: PLAN present but SPEC absent -> SPEC missing-file violation (a clean skip
+// would let a plan with no contract look green).
+check('stage=plan: PLAN present but SPEC missing -> SPEC missing-file violation', () => {
+  const plan = '# Plan: export\n\n## Tasks\n- **T1** [tdd] scope=`a` deps=[] covers=[AC-1]: x\n';
+  const v = runTrio({ intent: PLAN_INTENT, plan }, 'plan');
+  assert.ok(v.some((x) => x.includes('SPEC.md') && x.includes('missing file')), `expected a SPEC missing-file violation, got:\n${v.join('\n')}`);
+});
+
 // ---- CLI / exit-code edges (real process via spawnSync) ----
 check('cli: stage=research w/o RESEARCH -> exit1+missing; stage=spec w/o SPEC -> exit1+missing; stage=bogus -> exit1 usage; INTENT-only no stage -> exit0', () => {
   const work = mkwork();
@@ -523,6 +620,11 @@ check('cli: stage=research w/o RESEARCH -> exit1+missing; stage=spec w/o SPEC ->
     const rSpec = spawnSync('node', [SCRIPT, p, 'stage=spec'], { encoding: 'utf8' });
     assert.strictEqual(rSpec.status, 1, `stage=spec: expected exit 1, got ${rSpec.status}`);
     assert.ok(rSpec.stdout.includes('missing file'), `stage=spec: expected "missing file", got:\n${rSpec.stdout}`);
+
+    const rPlan = spawnSync('node', [SCRIPT, p, 'stage=plan'], { encoding: 'utf8' });
+    assert.strictEqual(rPlan.status, 1, `stage=plan: expected exit 1, got ${rPlan.status}`);
+    assert.ok(rPlan.stdout.includes('PLAN.md') && rPlan.stdout.includes('SPEC.md') && rPlan.stdout.includes('missing file'),
+      `stage=plan: expected PLAN+SPEC missing-file lines, got:\n${rPlan.stdout}`);
 
     const rBogus = spawnSync('node', [SCRIPT, p, 'stage=bogus'], { encoding: 'utf8' });
     assert.strictEqual(rBogus.status, 1, `stage=bogus: expected exit 1, got ${rBogus.status}`);

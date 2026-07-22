@@ -130,7 +130,7 @@ No prose essays, no restating the plan — the findings are the whole record.
 ## Write REVIEW.md, then return the findings
 
 Write `specs/<slug>/REVIEW.md` in the exact schema defined in
-`${CLAUDE_PLUGIN_ROOT}/docs/ARTIFACTS.md` (the REVIEW.md section) — header `# Review: <feature>
+`${CLAUDE_PLUGIN_ROOT}/skills/review/references/REVIEW.md` — header `# Review: <feature>
 (target=…)`, your one-line findings under `## Findings` (most-severe first; the `Clean. Nothing to
 flag.` sentinel when empty), a one-line `## Summary`. That file is the single source of truth for the
 format; follow it rather than improvising. **REVIEW.md carries no verdict** — you are advisory; a

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Dogfood for intent-lint.mjs — assert-based, no framework. Every case isolated in its own os.tmpdir()
-// dir so it NEVER touches the real repo. The golden PASS pairs/trios are EXTRACTED from docs/ARTIFACTS.md
-// at runtime (the worked INTENT/ASSUMPTIONS/RESEARCH examples), so if the doc drifts from the lint rules
+// dir so it NEVER touches the real repo. The golden PASS pairs/trios are EXTRACTED from the skill-local
+// artifact contracts (skills/discuss/references/{INTENT,ASSUMPTIONS}.md, skills/research/references/RESEARCH.md)
+// at runtime (the worked INTENT/ASSUMPTIONS/RESEARCH examples), so if a contract drifts from the lint rules
 // this test breaks — a living doc-code guard. FAIL fixtures are programmatic mutations of that golden,
 // one per byte-checkable rule (the 13 INTENT/ASSUMPTIONS rules + the RESEARCH.md sibling rules + the
 // stage-gated RESEARCH/SPEC Q-joins), each asserting exactly the expected violation surfaces.
@@ -15,7 +16,8 @@ import { lint } from './intent-lint.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SCRIPT = join(HERE, 'intent-lint.mjs');
-const DOC = join(HERE, '..', 'docs', 'ARTIFACTS.md');
+const DISCUSS_REF = join(HERE, '..', 'skills', 'discuss', 'references');
+const RESEARCH_REF = join(HERE, '..', 'skills', 'research', 'references');
 
 let fails = 0;
 function check(label, fn) {
@@ -32,29 +34,23 @@ function mkwork() {
   return fs.mkdtempSync(join(tmpdir(), 'intentlint-'));
 }
 
-// Pull the first ```markdown fenced block that follows `heading` in the doc.
-function extractBlock(doc, heading) {
-  const lines = doc.split(/\r?\n/);
-  const h = lines.findIndex((l) => l.trim() === heading);
-  assert.notStrictEqual(h, -1, `heading not found: ${heading}`);
-  let start = -1;
-  for (let i = h + 1; i < lines.length; i++) {
-    if (lines[i].trim() === '```markdown') { start = i + 1; break; }
-    if (/^##\s/.test(lines[i])) break;
-  }
-  assert.notStrictEqual(start, -1, `no markdown fence after ${heading}`);
+// Pull the first ```markdown fenced block from a skill-local artifact contract file (each contract
+// file carries exactly one artifact schema — the worked example the lint rules are extracted from).
+function firstBlock(path) {
+  const lines = fs.readFileSync(path, 'utf8').split(/\r?\n/);
+  const start = lines.findIndex((l) => l.trim() === '```markdown');
+  assert.notStrictEqual(start, -1, `no markdown fence in ${path}`);
   let end = -1;
-  for (let i = start; i < lines.length; i++) {
+  for (let i = start + 1; i < lines.length; i++) {
     if (lines[i].trim() === '```') { end = i; break; }
   }
-  assert.notStrictEqual(end, -1, `unclosed fence after ${heading}`);
-  return lines.slice(start, end).join('\n');
+  assert.notStrictEqual(end, -1, `unclosed fence in ${path}`);
+  return lines.slice(start + 1, end).join('\n');
 }
 
-const docText = fs.readFileSync(DOC, 'utf8');
-const GOLDEN_INTENT = extractBlock(docText, '## INTENT.md');
-const GOLDEN_ASSUMPTIONS = extractBlock(docText, '## ASSUMPTIONS.md');
-const GOLDEN_RESEARCH = extractBlock(docText, '## RESEARCH.md');
+const GOLDEN_INTENT = firstBlock(join(DISCUSS_REF, 'INTENT.md'));
+const GOLDEN_ASSUMPTIONS = firstBlock(join(DISCUSS_REF, 'ASSUMPTIONS.md'));
+const GOLDEN_RESEARCH = firstBlock(join(RESEARCH_REF, 'RESEARCH.md'));
 
 function writePair(dir, intent, assumptions) {
   fs.writeFileSync(join(dir, 'INTENT.md'), intent);

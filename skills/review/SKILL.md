@@ -39,7 +39,7 @@ never present them as a blocker, never let them touch the verify verdict.
    advisory input** — most-severe first, `Clean. Nothing to flag.` when empty. Never call them a gate,
    never block on them: a concern becomes a gate only by being made mechanical (promoted to a
    falsifiable SPEC `AC-N` that verify grades, or a hook that denies). The durable record is
-   `specs/<slug>/REVIEW.md` (schema in `${CLAUDE_PLUGIN_ROOT}/docs/ARTIFACTS.md`); the driver's
+   `specs/<slug>/REVIEW.md` (schema in `${CLAUDE_PLUGIN_ROOT}/skills/review/references/REVIEW.md`); the driver's
    plan-review→re-plan loop reads its finding count, never a verdict.
 
 ## Handoff

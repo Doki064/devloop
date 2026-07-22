@@ -52,7 +52,7 @@ only what informs this feature, never the whole project:
 
 2. **Draft criteria in EARS + a check-method tag.** Phrase each requirement in EARS — the constrained,
    testable shapes (WHEN / WHILE / IF / ubiquitous / WHERE) enumerated in the EARS quick reference of
-   `${CLAUDE_PLUGIN_ROOT}/docs/ARTIFACTS.md` — and tag *how* verify confirms it: **truth** (run a
+   `${CLAUDE_PLUGIN_ROOT}/skills/spec/references/SPEC.md` — and tag *how* verify confirms it: **truth** (run a
    command/test), **artifact** (a file/output that must exist with real content), **link** (a
    connection that must hold, e.g. a route calls a function), **manual** (not mechanically checkable).
 
@@ -70,12 +70,13 @@ only what informs this feature, never the whole project:
    reference these IDs to build the trace matrix (criterion ↔ test). Never reuse or renumber an ID
    once assigned.
 
-   **Revising an existing SPEC** follows the Revision rules in the ARTIFACTS SPEC section: **amend** in
+   **Revising an existing SPEC** follows the Revision rules in the SPEC contract
+   (`${CLAUDE_PLUGIN_ROOT}/skills/spec/references/SPEC.md`): **amend** in
    place under the stable `AC-N` (new text, same ID, plus an unbolded `(amended: …)` sub-line);
    **add** at the next free `AC-N` **above the highest ever used** — a whole-file scan that counts `(was AC-N)` notes too; **withdraw** by
    relocating the criterion out of `## Acceptance criteria` to `## Out of scope` as an unbolded `- (was
-   AC-N) <what + why withdrawn>` note (the ID stays in-file so it can never be reused). That ARTIFACTS
-   block is the source of truth — on any divergence it wins.
+   AC-N) <what + why withdrawn>` note (the ID stays in-file so it can never be reused). That SPEC
+   contract is the source of truth — on any divergence it wins.
 
 4. **Completeness sweep — hunt what the feature implies but the criteria don't state.** The step-5
    self-check form-checks each criterion but cannot catch a *missing* one, so before it, ask
@@ -99,7 +100,7 @@ only what informs this feature, never the whole project:
 ## Output
 
 Write `specs/<slug>/SPEC.md` in the exact schema and pass its Definition of Done — both defined in
-`${CLAUDE_PLUGIN_ROOT}/docs/ARTIFACTS.md` (the SPEC.md section). That file is the single source of
+`${CLAUDE_PLUGIN_ROOT}/skills/spec/references/SPEC.md`. That file is the single source of
 truth for the format; follow it rather than improvising sections.
 
 Keep it lean — a spec is a contract, not an essay. Every line must be something a verifier or

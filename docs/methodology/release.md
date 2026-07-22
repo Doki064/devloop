@@ -34,7 +34,7 @@ Read the session transcript (`~/.claude/projects/<dir>/*.jsonl`) and grade the f
 transcript.
 
 ### 4. Grade against a fixed checklist written *before* the run
-- Stage artifacts match `docs/ARTIFACTS.md` schemas.
+- Stage artifacts match their `skills/<stage>/references/` contracts (indexed by `docs/ARTIFACTS.md`).
 - TDD ordering held: `test(<scope>)` commit precedes `feat(<scope>)` in the fixture git log; drive
   stopped without invoking ship.
 - Drive's terminal handoff delivered (`/clear` + `/devloop:ship <feature>`); per-stage handoffs absent

@@ -49,15 +49,17 @@ finding no question asked for is a defect, not a bonus.
    ones, dispatch ONE researcher carrying all of them. With more that are independent, cluster
    by topic/`affects=` and dispatch one researcher per cluster **in a single message** so they
    run in parallel. Pass each researcher: the `<slug>`, the mode, its assigned question lines
-   verbatim, and the INTENT `## Goal` for context. Researchers **return** schema-shaped finding
-   lines; they do not write files.
+   verbatim, and the INTENT `## Goal` for context. Researchers **return** schema-shaped FINDINGS,
+   EVIDENCE-AGAINST, and UNANSWERED lines (a finding may be a throwaway-spike verdict); they do not
+   write files.
 
 6. **Merge into `specs/<slug>/RESEARCH.md`** per the exact schema in
    `${CLAUDE_PLUGIN_ROOT}/skills/research/references/RESEARCH.md` (the single
    source of truth for the format, including the source-goes-last ` — ` rule). Create the file
-   with its `(mode=…)` header when absent; otherwise insert new lines **section-targeted** —
-   findings at the end of `## Findings`, unanswered at the end of `## Unanswered` — never a bare
-   append at end-of-file.
+   with its `(mode=…)` header and all three sections when absent; otherwise insert new lines
+   **section-targeted** — findings at the end of `## Findings`, evidence-against at the end of
+   `## Evidence Against`, unanswered at the end of `## Unanswered` — never a bare append at
+   end-of-file.
 
 7. **Self-check after every write:**
    `node ${CLAUDE_PLUGIN_ROOT}/scripts/intent-lint.mjs specs/<slug>/INTENT.md stage=research` —

@@ -442,6 +442,78 @@ check('stage=spec arm C: Q resolved only via an ASSUMPTIONS (Q<N>) link -> clean
   assert.deepStrictEqual(runTrio({ intent, assumptions, spec }, 'spec'), []);
 });
 
+// stage=spec Q-id boundary guard: unresolved Q1 must NOT be satisfied by SPEC text that only contains
+// Q10 (substring match would wrongly treat "Q10" as citing "Q1").
+check('stage=spec: unresolved Q1 not satisfied by SPEC citing only Q10 -> flags exactly Q1', () => {
+  const intent = minimalIntent(
+    [
+      '- **Q1** [scope] route=user affects=SPEC split="admins only vs all users": Who can trigger?',
+      '- **Q10** [scope] route=user affects=SPEC split="sync vs async": How does it run?',
+    ].join('\n'),
+    '- **Q10**: async.',
+  );
+  const spec = '# Spec: t\n\n## Open questions\n- [NEEDS CLARIFICATION: run mode (Q10)]\n';
+  const v = runTrio({ intent, spec }, 'spec');
+  assert.deepStrictEqual(v, ['SPEC.md: Q1 is unresolved and its Q token appears nowhere in SPEC.md'], `got:\n${v.join('\n')}`);
+});
+
+// ---- stage=spec: duplicate-AC-N rule (decision 6) ----
+
+// dup-AC 1: two **AC-2** bullets in ## Acceptance criteria -> stage=spec exit1 with exactly the
+// dup violation; the SAME bytes -> bare AND stage=research exit 0 (neither owns SPEC — wedge guard).
+// A valid RESEARCH.md is included so the stage=research exit-0 arm tests the join, not the
+// missing-RESEARCH-file rule.
+check('stage=spec dup-AC: two **AC-2** bullets -> exactly the dup violation; bare/research untouched', () => {
+  const specDup = '# Spec: export\n\n## Acceptance criteria\n'
+    + '- **AC-1** [truth]: WHEN x THE SYSTEM SHALL y\n'
+    + '- **AC-2** [artifact]: THE SYSTEM SHALL z\n'
+    + '- **AC-2** [truth]: THE SYSTEM SHALL w\n\n'
+    + '## Open questions\n- [NEEDS CLARIFICATION: queue reusability (Q4)]\n';
+  const files = { intent: GOLDEN_INTENT, assumptions: GOLDEN_ASSUMPTIONS, research: GOLDEN_RESEARCH, spec: specDup };
+
+  const vSpec = runTrio(files, 'spec');
+  assert.deepStrictEqual(vSpec, ['SPEC.md: AC-2 is duplicated in ## Acceptance criteria'], `expected exactly the dup violation, got:\n${vSpec.join('\n')}`);
+
+  assert.deepStrictEqual(runTrio(files), [], 'expected bare invocation to stay clean (SPEC is not its file)');
+  assert.deepStrictEqual(runTrio(files, 'research'), [], 'expected stage=research to stay clean (SPEC is not its file)');
+});
+
+// dup-AC 2: withdrawal form — `(was AC-2)` under ## Out of scope must not count as a live AC-2,
+// and must not collide with an absent AC-2 in ## Acceptance criteria.
+check('stage=spec dup-AC: withdrawn (was AC-2) note under Out of scope -> clean', () => {
+  const spec = '# Spec: export\n\n## Acceptance criteria\n'
+    + '- **AC-1** [truth]: WHEN x THE SYSTEM SHALL y\n\n'
+    + '## Out of scope\n- (was AC-2) superseded — no longer needed after the re-gate\n\n'
+    + '## Open questions\n- [NEEDS CLARIFICATION: queue reusability (Q4)]\n';
+  const files = { intent: GOLDEN_INTENT, assumptions: GOLDEN_ASSUMPTIONS, research: GOLDEN_RESEARCH, spec };
+  assert.deepStrictEqual(runTrio(files, 'spec'), [], `expected clean, got:\n${runTrio(files, 'spec').join('\n')}`);
+});
+
+// dup-AC 3: section-scope guard — a prose mention of AC-1 in ## Open questions must not double-count
+// against the single **AC-1** bullet in ## Acceptance criteria (kills a whole-file or unbolded scan).
+check('stage=spec dup-AC: prose "AC-1" mention in Open questions -> not counted, clean', () => {
+  const intent = minimalIntent(
+    '- **Q1** [scope] route=user affects=SPEC split="admins only vs all users": Who can trigger?',
+    '- **Q1**: all users.',
+  );
+  const spec = '# Spec: t\n\n## Acceptance criteria\n- **AC-1** [manual]: threshold TBD (Q1)\n\n'
+    + '## Open questions\n- [NEEDS CLARIFICATION: AC-1 threshold unknown (Q1)]\n';
+  const v = runTrio({ intent, spec }, 'spec');
+  assert.deepStrictEqual(v, [], `expected clean, got:\n${v.join('\n')}`);
+});
+
+// dup-AC 4: unique-ACs clean control.
+check('stage=spec dup-AC: AC-1..AC-3 all unique -> clean', () => {
+  const spec = '# Spec: export\n\n## Acceptance criteria\n'
+    + '- **AC-1** [truth]: WHEN x THE SYSTEM SHALL y\n'
+    + '- **AC-2** [artifact]: THE SYSTEM SHALL z\n'
+    + '- **AC-3** [truth]: IF c THEN THE SYSTEM SHALL w\n\n'
+    + '## Open questions\n- [NEEDS CLARIFICATION: queue reusability (Q4)]\n';
+  const files = { intent: GOLDEN_INTENT, assumptions: GOLDEN_ASSUMPTIONS, research: GOLDEN_RESEARCH, spec };
+  const v = runTrio(files, 'spec');
+  assert.deepStrictEqual(v, [], `expected clean, got:\n${v.join('\n')}`);
+});
+
 // ---- CLI / exit-code edges (real process via spawnSync) ----
 check('cli: stage=research w/o RESEARCH -> exit1+missing; stage=spec w/o SPEC -> exit1+missing; stage=bogus -> exit1 usage; INTENT-only no stage -> exit0', () => {
   const work = mkwork();

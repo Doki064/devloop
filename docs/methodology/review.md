@@ -52,7 +52,8 @@ Run every landed slice against these; headline findings tend to come from here:
   a `$(cat <<EOF)` heredoc fails it open — the fix layer is covered in "Lessons" below.)
 - **Schema gap in ARTIFACTS surfacing as producer↔consumer drift.** (e.g. a `manual`-AC with no VERIFY
   representation → planner dumps it in Coverage gaps → verifier orphan-BLOCK. Fix by adding one line to
-  ARTIFACTS, then re-checking referrers.)
+  ARTIFACTS, then re-checking referrers.) — and the **inverse**: a contract line promising a consumer
+  behavior no consumer implements (grep the named consumer skill for the artifact's filename).
 - **Deferral markers:** right phase, greppable, no current/completed-phase debt (`grep -rn "DEFERRED(Phase <cur>"`).
 - **For code:** which direction does it fail (open vs closed)? regex injection? edge cases (empty input,
   first-ever commit, ambiguous/duplicate matches, non-repo)?

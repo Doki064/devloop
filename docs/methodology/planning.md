@@ -63,7 +63,9 @@ fail-open that silently contradicts the reference's *fall-through-to-deny*, and 
 behavior while passing the existing test suite).
 **The best validation output is a guard test:** the ONE fixture a faithful-looking-but-wrong build
 would fail (e.g. "`feat(foo)` as the first-ever commit, empty `git log` → DENY" when none of the
-existing fixtures exercise an empty log). Name the pitfalls a new runtime reintroduces (sync stdin,
+existing fixtures exercise an empty log) — and when the build *is* a validator/lint, one FAIL
+fixture **per enforced rule**, not one representative: a build that silently drops a single check
+must fail a test. Name the pitfalls a new runtime reintroduces (sync stdin,
 flush-before-exit, path separators, spawn-failure degradation) so the reviewer has a checklist.
 **When the plan's logic branches on environmental state** (git remote present/absent, unborn HEAD,
 dirty tree, path separators), *run that branch logic in isolation against each case before
@@ -79,10 +81,11 @@ sails past; only a run where the system's own state produces the signal exposes 
 
 ## Reflexes that make it work (the invariants under the steps)
 - **Fold findings, then re-validate — refinement introduces new staleness.** Every edit pass can rot a
-  premise; after folding, re-read for what the edits broke — and when the fold *materially rewrites
-  logic* (not just wording), re-run the **fresh** reviewer, not just a self re-read: the re-read shares
-  the blind spot that wrote the fold (a "fix" that re-opened the bypass it closed survived self-review;
-  only a fresh pass caught it).
+  premise; after folding, re-read for what the edits broke — and after **any** fold that adds or
+  changes contract content (not pure typo/wording), re-run the **fresh** reviewer, not just a self
+  re-read: the re-read shares the blind spot that wrote the fold, and "additive" folds break guards
+  too (a fold that only *added* sections still broke its own worked example and left a safety claim
+  unenforced — self-review missed it twice; only a fresh pass caught it).
 - **Deliberate ≠ accidental.** A gap the artifact explicitly justifies (a marker, an out-of-scope note)
   is not a finding. Don't flag reasoned simplifications; do flag silent ones.
 - **Keep the plan lean (prune test) but review-ready.** Enough that a build can be graded against it;

@@ -61,6 +61,11 @@ orphaned marker, clears a stale pointer — it **preserves** a dirty tree, never
   markers to gitignore, or an inconsistency it could not safely repair). Do not resume over a `BLOCK` —
   this is the self-heal-or-fail-closed boundary the raw fail-closed check below used to dead-end at.
 
+**Fresh-run reset of the heal-escalation one-shot.** On a fresh run (**no** `specs/<slug>/*.done`
+marker exists — the same condition as above), `rm -f .devloop/<slug>.heal-replan`: a new drive of this
+feature earns a full heal-escalation budget. That one-shot marker (written by **Heal escalation** below)
+lives under `.devloop/`, so it **survives a resume** but never a fresh run.
+
 **Resume entry — skip stages already completed.** drive is resumable by re-invocation: a run cut short
 (context limit, Ctrl-C, crash) is continued by running `/devloop:drive <feature>` again. Each stage drops a
 write-once `specs/<slug>/<stage>.done` marker (via the same helper) as its gate clears. Compute
@@ -230,21 +235,70 @@ is a cheap secondary guard for the case doctor was unavailable or degraded). Do 
        carries a `REGATE` line naming its tier: `plan-only` (e.g. a failing AC with **no committed
        test** — a coverage/plan gap it must not paper over) or `spec-invalidating` (the only
        possible fix is a test/SPEC change) — first disarm the guard (`rm -f .devloop/heal-active`,
-       sub-step 3's every-exit rule), then route on the tier word: `plan-only` → the **plan-only
-       route** (below); `spec-invalidating` → the **global re-gate** (below). Do not re-verify
-       first. A stop-and-surface return carrying **no** REGATE line (e.g. a fix that cannot reach
-       GREEN) → disarm the guard and **early-exit**, reporting it verbatim (distinct from a
-       no-progress abort).
+       sub-step 3's every-exit rule), then route on the tier word: `plan-only` → the **heal
+       escalation** (below — one automatic re-plan, at most once per feature); `spec-invalidating` →
+       the **global re-gate** (below). Do not re-verify first. A stop-and-surface return carrying
+       **no** REGATE line (e.g. a fix that cannot reach GREEN) → disarm the guard and **stop** via the
+       **Stop report** (below), reporting it verbatim — distinct from a no-progress abort, and not
+       escalated: the implementer gave up without a tier, so there is nothing to auto-route.
     3. **Disarm the guard** — `rm -f .devloop/heal-active`, on **every** path out of the attempt
        (normal and error), so a later standalone `implement` never inherits a stale freeze.
     4. **Re-verify** — invoke `verify stage=impl` again; recompute the failing set from the new
        VERIFY.md. `## Verdict` **PASS** → healed; **drop `implement.done`** (same command as step 6),
        then go to step 7. New failing set **not a strict subset**
-       of the previous (it didn't shrink) → **no-progress abort**: report the still-failing rows and
-       stop (a mixed set with one un-healable AC surfaces the whole set here — deliberate fail-closed).
-       Otherwise loop, up to the cap.
-    **Exhausted** (3 attempts, still failing) → report the remaining failing ACs + "heal exhausted",
-    stop. Always leave `.devloop/heal-active` cleared when the loop ends.
+       of the previous (it didn't shrink) → **no-progress abort**: a **notified stop** (the **Stop
+       report** below) with the still-failing rows — a stagnant or growing set is the fail-closed
+       signal, deliberately *not* escalated (escalation is the cap's job; a mixed set with one
+       un-healable AC surfaces the whole set here). Otherwise loop, up to the cap.
+    **Exhausted** (3 attempts, still failing) → the loop gave up in-place → **heal escalation**
+    (below): classify the residual failure and route it once. Always leave `.devloop/heal-active`
+    cleared when the loop ends.
+
+**Heal escalation** (the self-heal loop gave up in-place — reached from 6a's cap-3 **Exhausted**
+terminal, and the routing target for return site 4's `plan-only`). The steal from superpowers' "3+
+failed fixes → question the architecture": **one automatic re-plan, then stop**. `.devloop/heal-active`
+is already cleared (6a sub-step 3) before you arrive here.
+1. **Get the tier** — drive routes by the tier word only; the *implementer* classifies (same division
+   of labor as return site 4):
+   - **From return site 4** the tier is already in hand (its `REGATE <tier>:` line) — use it, skip to 2.
+   - **From cap-3 Exhausted** no REGATE was surfaced (a proactive one would have routed via return site
+     4 before the cap). Invoke the `implement` skill with the **`heal`** token and an explicit
+     *classify-only* instruction: heal is exhausted after 3 attempts, the failing rows are `<the
+     failing set>`, **do not attempt further fixes or commits** — return the single `REGATE
+     <plan-only|spec-invalidating>: <discovery + evidence> — <what it invalidates>` line the driver
+     will route on (its Heal-mode / Edge-cases contract already defines exactly these two lines). No
+     guard is armed: the pass writes nothing.
+2. **Route by the tier word** (quote the REGATE line **verbatim** in every report — drive splits on
+   nothing inside it):
+   - **`spec-invalidating`** → the **global re-gate** (below). The contract itself is in doubt; the
+     global re-gate's ledger-`cmp` no-progress abort (and the front door's own headless degrade) bound
+     it — the "wider radius stops immediately" path needs no heal-specific counter, so this rider adds
+     none there.
+   - **`plan-only`** → **one automatic re-plan, at most once per feature**, gated on
+     `.devloop/<slug>.heal-replan`:
+     - **absent** → the *first* heal-escalation re-plan. Record it, then re-plan **silently** (no chat
+       notification — the auto re-gate's durable trace is the revised `PLAN.md` the plan-only route
+       writes, plus this marker; a chat line would bury under the run's output): `date -u
+       +%Y-%m-%dT%H:%M:%SZ | node ${CLAUDE_PLUGIN_ROOT}/scripts/atomic-write.mjs
+       .devloop/<slug>.heal-replan` (nonzero → warn, don't stop), then take the **plan-only route**
+       (below) with the REGATE line's discovery text.
+       <!-- ponytail: one-shot, hardcoded 1 — deterministic, worst case two implement+verify+heal
+            cycles. Heal cycles are expensive with no clean strict-progress metric, so decision 4 chose
+            this over a counted N-shot or the ledger no-progress bound. Upgrade to a counter written
+            under the same marker if two cycles ever proves too few. -->
+     - **present** → the *second* heal escalation, after the auto re-plan already ran → **always stop,
+       actively** (the **Stop report** below): one auto re-plan didn't clear it, so a human decides.
+       Do **not** re-plan again. Durable record: the marker (present) + `specs/<slug>/VERIFY.md`'s
+       failing rows. Next command in the report: fix the underlying issue then re-run
+       `/devloop:drive <feature>` — or `rm .devloop/<slug>.heal-replan` to grant one more auto re-plan.
+
+**Marker lifecycle — `.devloop/<slug>.heal-replan`.** Machine state (`.devloop/` is
+gitignored-equivalent, and doctor treats it as machine-noise, so this needs no doctor or gitignore
+change). Existence = "the one heal-escalation auto re-plan for this feature has been consumed."
+**Written** in the `plan-only`/absent branch above; **survives a resume** (never cleared while any
+`specs/<slug>/*.done` marker is present); **reset** on a genuine **global re-gate** (step 1 below rm's
+it — a changed contract earns a fresh heal budget) and at the top of a **fresh run** (the Fresh-run
+reset above). Markers only, never artifacts.
 
 **Plan-only route** (from return sites 3 and 4 — the implementer's `REGATE plan-only`; the planner
 never emits it). The SPEC holds; the PLAN is invalidated. Quote the REGATE line **verbatim** when
@@ -263,8 +317,10 @@ interior ` — `):
 in doubt; fold the discovery back through the front door. Quote the REGATE line **verbatim** in every
 report (same prose rule as above):
 1. **Invalidate the stale markers:** `rm -f specs/<slug>/spec.done specs/<slug>/plan.done
-   specs/<slug>/implement.done` — markers only, never artifacts (doctor's own fix idiom; SPEC.md and
-   PLAN.md stay on disk for the revision path). `discuss.done`/`research.done` **stay**: the front
+   specs/<slug>/implement.done .devloop/<slug>.heal-replan` — markers only, never artifacts (doctor's
+   own fix idiom; SPEC.md and PLAN.md stay on disk for the revision path). The trailing
+   `.devloop/<slug>.heal-replan` resets the heal-escalation one-shot: a changed contract earns a fresh
+   heal budget. `discuss.done`/`research.done` **stay**: the front
    door was evaluated, and the re-entry below re-evaluates it anyway.
 2. **Snapshot the ledger** for the progress check: `mkdir -p .devloop`, then copy
    `specs/<slug>/INTENT.md` and `specs/<slug>/ASSUMPTIONS.md` — each *if present* — to snapshot
@@ -303,14 +359,25 @@ report (same prose rule as above):
    verified and ready, and instruct per the Handoff below: run `/clear` (or start a new session) for
    fresh context, then `/devloop:ship <feature-name>` to push the branch and open the PR.
 
+**Stop report (the shared unattended-run stop notification — not heal-specific).** Whenever drive
+halts, emit **one clearly-delimited final report**: **what stopped** (the stage), **why** (the
+artifact / BLOCK / failing rows, or the `REGATE` line verbatim), **the next command** to resume or
+repair, and **the durable record** the user can find later (the `specs/<slug>/*.done` markers already
+on disk, `specs/<slug>/VERIFY.md`, and any `.devloop/` state such as `.devloop/<slug>.heal-replan`).
+This report *is* drive's terminal response, so it is always surfaced — an unattended user learns the
+pipeline halted from it and can reconstruct it later from the durable record; no separate `STOPPED`
+artifact is written. A silent stop is the one thing forbidden. (The auto re-gate is the deliberate
+inverse: silent in chat, its trace living in the durable record — see **Heal escalation**.)
+
 **On any stage failure** (a missing artifact, a BLOCK, a task that won't go GREEN, or a verify FAIL the
-self-heal loop could not clear): report **which stage** stopped the run and the artifact/BLOCK/failing
-rows behind it, then stop. Do **not** blind-retry a stage — re-running a deterministic stage on
+self-heal loop could not clear): emit the **Stop report** above — **which stage** stopped the run and
+the artifact/BLOCK/failing rows behind it — then stop. Do **not** blind-retry a stage — re-running a deterministic stage on
 *unchanged* inputs just re-fails. The principled re-runs all happen on *changed* inputs and are
 bounded with a no-progress abort: the **re-plan loop** (step 4, re-runs plan on revised REVIEW.md
 findings, bounded by strict finding-count decrease — advisory, so it *continues* on no-progress), the
 **self-heal loop** (step 6a, re-implements from VERIFY.md failing rows, capped at 3 — a gate, so it
-*stops* on no-progress), and the **REGATE re-entries** (the plan-only route and the global re-gate,
+*stops* on no-progress; cap-exhaustion escalates once via **Heal escalation** — one automatic
+   plan-only re-plan per feature, then a notified stop), and the **REGATE re-entries** (the plan-only route and the global re-gate,
 re-running stages on a recorded discovery — the global path bounded by the ledger-`cmp` no-progress
 abort). Everything else fails closed rather than blind-retrying.
 <!-- Resume core + doctor built: `.done` markers (atomic write via scripts/atomic-write.mjs),

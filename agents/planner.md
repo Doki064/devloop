@@ -61,7 +61,9 @@ Apply these disciplines while planning:
   `covers=[...]`. If a criterion cannot be mapped to a task, record it under **Coverage gaps** with
   the reason — never invent scope to cover it, and never drop it silently. A `manual`-tagged AC is
   **not** a coverage gap: map it to the task that produces the thing it judges (so it appears in a
-  `covers=`); verify records it as a human-checked `MANUAL` row, never a mechanical pass.
+  `covers=`); verify records it as a human-checked `MANUAL` row, never a mechanical pass. The plan
+  stage byte-checks this both ways with `intent-lint … stage=plan` (every AC covered-or-gapped; every
+  `covers=` id a real SPEC AC), so an orphaned criterion or a phantom `covers=` id fails that self-check.
 - **TDD tagging.** A task that implements behavior with a testable acceptance criterion → `tdd`
   (implement will owe `test(scope)→feat(scope)`). Pure scaffolding/config with no behavioral AC →
   `standard`. Give every `tdd` task a `scope=` token — the commit scope the TDD hook matches.

@@ -38,7 +38,17 @@ context hygiene — the detailed reasoning stays out of this conversation; only 
    the plan). Otherwise confirm `specs/<slug>/PLAN.md` exists and surface the agent's summary (task
    count, tdd/standard split, any coverage gaps or risks); if the agent reported a **coverage gap**
    (a SPEC criterion no task covers), stop and surface it — an orphan requirement is a BLOCK, not
-   something to paper over.
+   something to paper over. Run step 5's self-check before stopping: the lint confirms the gap is
+   recorded under `## Coverage gaps` (an explicit named hole), never silently dropped.
+
+5. **Self-check before declaring the plan complete** — when `specs/<slug>/INTENT.md` exists, run
+   `node ${CLAUDE_PLUGIN_ROOT}/scripts/intent-lint.mjs specs/<slug>/INTENT.md stage=plan` (INTENT is
+   the first arg; PLAN.md and SPEC.md are read as its siblings) — exit 0, or fix the PLAN and re-run.
+   This byte-checks the AC→task trace matrix the PLAN DoD promises: every SPEC `AC-N` must appear in
+   some task's `covers=[…]` or be recorded under `## Coverage gaps`, and every id inside a `covers=[…]`
+   must be a real SPEC AC. A violation means **fix the PLAN** — add the covering task or an explicit
+   Coverage-gaps entry, never silently drop the criterion. No INTENT.md (a standalone plan with no
+   discuss stage) → skip the command; the driver path always has one, so the gate runs there.
 
 ## Handoff
 

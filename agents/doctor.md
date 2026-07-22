@@ -29,19 +29,26 @@ and testable — you run it and interpret its output; you do **not** re-derive t
    ```
 
    Pass `--fix` only when you were told to fix. The script prints JSON:
-   `{ slug, staleMarkers[], dirtyTree, stalePointer, committedMarkers[], fixed[], verdict }`.
+   `{ slug, staleMarkers[], dirtyTree, stalePointer, committedMarkers[], intentLintViolations[], fixed[], verdict }`.
 
 2. **What each field means** (trust the scan; do not re-classify):
    - **staleMarkers** — `.done` markers whose required upstream artifact is missing (the consistent-prefix
      rule: a missing `SPEC.md` orphans spec/plan/implement markers; a missing `PLAN.md` orphans
      plan/implement). This rule is drive's own resume rule — doctor's verdict never disagrees with what
      drive would do. With `--fix` these are deleted (work-safe: the artifact is already gone, so the
-     stage cleanly re-runs; no committed work is lost) and listed in `fixed[]`.
+     stage cleanly re-runs; no committed work is lost) and listed in `fixed[]`. `discuss.done`/
+     `research.done` never join this rule (no mandatory artifact of their own) — they're covered by
+     **committedMarkers** below like any other marker.
    - **stalePointer** — `.devloop/active` names a slug with no `specs/<slug>/` dir. `--fix` clears it.
    - **dirtyTree** — uncommitted changes exist (whole-repo). **doctor never touches it** — it *preserves*
      the tree. A dirty tree always makes the verdict `BLOCK`.
    - **committedMarkers** — `.done` markers tracked in git (a clone would wrongly skip stages). Never
      auto-fixed (gitignoring them is init's job). WARN in `attended`; `BLOCK` in `auto`.
+   - **intentLintViolations** — when `specs/<slug>/INTENT.md` exists, the bare `intent-lint` findings
+     against it (no stage token — stage-gated coverage joins are stage-owned, not doctor's). Absent
+     `INTENT.md` → empty. Never auto-fixed (prose is never doctor-fixable): **BLOCK** in `auto`, **ISSUES**
+     in `attended`. Named remedy: fix `INTENT.md` per the printed violations, or delete the front-end trio
+     (`INTENT.md`/`RESEARCH.md`/`ASSUMPTIONS.md`) to restart the front door.
    - **verdict** — `CLEAN` (nothing) · `ISSUES` (fixes applied / attended WARNs — resolvable) · `BLOCK`.
 
 3. **Gate by mode (fail closed unattended).**

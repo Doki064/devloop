@@ -45,6 +45,37 @@ function touchArtifact(dir, slug, name) {
   fs.writeFileSync(join(dir, 'specs', slug, name), '# content');
 }
 
+// Schema-valid INTENT.md (lints clean bare — see intent-lint.mjs) used by the front-end guard fixtures.
+// route param lets guard 2 flip Q1 to route=research without a RESEARCH.md sibling.
+function cleanIntent(route = 'user') {
+  return `# Intent: test feature
+
+## Goal
+A test feature for doctor-scan fixtures.
+
+## Coverage
+| category | status | note |
+|----------|--------|------|
+| goal | Clear | |
+| scope | Clear | |
+| success-criteria | Clear | |
+| constraints | Clear | |
+| integration-surface | Clear | |
+| edge/failure | Clear | |
+
+## Questions
+- **Q1** [scope] route=${route} affects=SPEC split="a vs b": Some question?
+
+## Answers
+- **Q1**: an answer.
+`;
+}
+
+function writeIntent(dir, slug, content) {
+  fs.mkdirSync(join(dir, 'specs', slug), { recursive: true });
+  fs.writeFileSync(join(dir, 'specs', slug, 'INTENT.md'), content);
+}
+
 // 1. Consistent: spec.done+plan.done + SPEC.md+PLAN.md present -> CLEAN, staleMarkers empty.
 check('1. consistent full prefix -> CLEAN', () => {
   const work = mkwork();
@@ -274,6 +305,93 @@ check('12. --fix during dirty tree -> orphan marker preserved, verdict BLOCK', (
     assert.strictEqual(fs.existsSync(orphan), true); // NOT deleted (deferred to a clean-tree run)
     assert.deepStrictEqual(scan.fixed, []);
     assert.ok(scan.staleMarkers.includes('specs/foo/spec.done')); // still surfaced
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+});
+
+// 13. INTENT.md present with a shape violation (## Goal removed) -> auto BLOCK, attended ISSUES,
+//     intentLintViolations names the violation (both modes asserted on the same fixture).
+check('13. INTENT.md shape violation -> auto BLOCK, attended ISSUES, intentLintViolations names it', () => {
+  const work = mkwork();
+  try {
+    const noGoal = cleanIntent().replace('## Goal\nA test feature for doctor-scan fixtures.\n\n', '');
+    writeIntent(work, 'foo', noGoal);
+
+    const auto = doctorScan('foo', { cwd: work, mode: 'auto' });
+    assert.strictEqual(auto.verdict, 'BLOCK');
+    assert.ok(auto.intentLintViolations.some((v) => v.includes('Goal')), `expected a Goal violation, got:\n${auto.intentLintViolations.join('\n')}`);
+
+    const attended = doctorScan('foo', { cwd: work, mode: 'attended' });
+    assert.strictEqual(attended.verdict, 'ISSUES');
+    assert.ok(attended.intentLintViolations.some((v) => v.includes('Goal')), `expected a Goal violation, got:\n${attended.intentLintViolations.join('\n')}`);
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+});
+
+// 14. INTENT.md clean, carrying a route=research question with NO sibling RESEARCH.md -> field [],
+//     verdict CLEAN unchanged. Pins the BARE lint(path) contract: a build that passed a stage token
+//     (stage=research) would emit the RESEARCH coverage violation on exactly this shape and fail here.
+check('14. clean INTENT.md w/ route=research Q + no RESEARCH.md sibling -> field [], verdict CLEAN', () => {
+  const work = mkwork();
+  try {
+    writeIntent(work, 'foo', cleanIntent('research'));
+    const scan = doctorScan('foo', { cwd: work });
+    assert.deepStrictEqual(scan.intentLintViolations, []);
+    assert.strictEqual(scan.verdict, 'CLEAN');
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+});
+
+// 15. INTENT.md absent -> intentLintViolations [] and every pre-existing field + verdict unchanged
+//     versus today's scan on the same (fresh, no-INTENT) fixture. Field-scoped, not byte-identical JSON
+//     (the new field legitimately appears) — kills an unconditional lint call whose missing-file
+//     violation would pollute the field and flip the verdict.
+check('15. INTENT.md absent -> intentLintViolations [], all pre-existing fields/verdict unchanged', () => {
+  const work = mkwork();
+  try {
+    const scan = doctorScan('foo', { cwd: work });
+    assert.deepStrictEqual(scan.staleMarkers, []);
+    assert.strictEqual(scan.dirtyTree, false);
+    assert.strictEqual(scan.stalePointer, false);
+    assert.deepStrictEqual(scan.committedMarkers, []);
+    assert.deepStrictEqual(scan.fixed, []);
+    assert.strictEqual(scan.verdict, 'CLEAN');
+    assert.deepStrictEqual(scan.intentLintViolations, []);
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+});
+
+// 16. research.done marker present, INTENT.md absent -> verdict CLEAN. Front-end markers (discuss.done,
+//     research.done) must NOT join the consistent-prefix stale-marker rule — the all-Clear state (no
+//     INTENT.md means the front end was skipped entirely) must not read as stale.
+check('16. research.done present, INTENT.md absent -> verdict CLEAN (front-end marker not stale-gated)', () => {
+  const work = mkwork();
+  try {
+    touchMarker(work, 'foo', 'research.done');
+    const scan = doctorScan('foo', { cwd: work });
+    assert.strictEqual(scan.verdict, 'CLEAN');
+    assert.deepStrictEqual(scan.intentLintViolations, []);
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+});
+
+// 17. Committed discuss.done pins that the existing specs/**/*.done git glob already catches front-end
+//     markers like any other committed marker (existing suite stays green byte-identically alongside).
+check('17. committed discuss.done -> surfaces as a committed marker like any other, verdict ISSUES', () => {
+  const work = mkwork();
+  try {
+    initGit(work);
+    touchMarker(work, 'foo', 'discuss.done');
+    execFileSync('git', ['add', '-A'], { cwd: work });
+    execFileSync('git', ['commit', '-q', '-m', 'add discuss.done'], { cwd: work });
+    const scan = doctorScan('foo', { cwd: work, mode: 'attended' });
+    assert.ok(scan.committedMarkers.includes('specs/foo/discuss.done'));
+    assert.strictEqual(scan.verdict, 'ISSUES');
   } finally {
     fs.rmSync(work, { recursive: true, force: true });
   }

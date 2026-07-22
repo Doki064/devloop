@@ -72,10 +72,15 @@ detection is never biased by the effort of answering.
      Q&A round. The coverage record is the point; all-filtered is not all-Clear.
    - **Questions survived** → write INTENT (Goal, Coverage, Questions) now, before any answering.
 
+   **Record decisions.** A choice that is *settled* — not open — lands as a `## Decisions` `D<N>`
+   entry (the decision + a one-line rationale), append-only, IDs never reused. This includes a
+   choice the **user volunteered without a question being asked**. A `D<N>` is not a `Q<N>` and is
+   not derived from one; the stage=plan D-join checks each surfaces in SPEC or PLAN.
+
    Write to the exact schemas in `${CLAUDE_PLUGIN_ROOT}/skills/discuss/references/INTENT.md` and
    `${CLAUDE_PLUGIN_ROOT}/skills/discuss/references/ASSUMPTIONS.md` — the single source of truth for both formats.
 
-   **A re-gate discovery lands in one of two shapes** (both recorded in this same Phase-1 write).
+   **A re-gate discovery lands in one of three shapes** (all recorded in this same Phase-1 write).
    **Dedup first:** a discovery whose fact is already recorded in the ledger — as a `Q<N>`, an
    `## Answers` entry, or a prior Coverage landing — is a duplicate: write **nothing** for it (the
    driver's re-gate no-progress bound depends on this). Otherwise:
@@ -86,6 +91,13 @@ detection is never biased by the effort of answering.
      was found>"` — **and immediately
      append its `## Answers` entry citing that evidence, in this same write**. Evidence is an Answer,
      never an ASSUMPTIONS entry (assumptions are chosen defaults, evidence is settled fact).
+   - **Settled decision** (a determined correction that needs no question — the choice is simply made,
+     with no veto surface to open) → a `## Decisions` `D<N>` entry (the decision + rationale), not a
+     `Q<N>`; the stage=plan D-join carries it forward. **The test:** no veto surface = the discovery
+     settles a choice the user never expressed a preference about — nothing recorded in the ledger is
+     overridden. If it corrects or overrides a recorded Answer, Assumption, or anything the user chose
+     or could contest, it is a Determined correction (Q+Answer — the user stays the veto surface),
+     never a `D<N>`.
    - **At the cap** (ledger already holds 10 Qs): an **open-question** discovery takes the existing
      drop-or-assume valve (an ASSUMPTIONS entry or a Coverage drop-note). A **determined correction**
      can be neither `Q11` (the lint's hard bound) nor an `A<N>` (evidence is not an assumption) nor
@@ -130,5 +142,5 @@ State the next step: unresolved `route=research` questions remain → `/devloop:
 (skip under the driver): tell the user to run `/clear` (or start a new session) for fresh context
 before the next devloop command.
 
-Summarize: questions asked, answers recorded, recorded determined corrections awaiting veto,
-assumptions taken (call out `[irreversible]` ones first), and what research must answer.
+Summarize: questions asked, answers recorded, decisions recorded, recorded determined corrections
+awaiting veto, assumptions taken (call out `[irreversible]` ones first), and what research must answer.

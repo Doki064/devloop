@@ -395,6 +395,22 @@ check('stage=research: route=research Q absent from RESEARCH -> no-stage passes,
   assert.ok(has(v, 'Q4'), `expected a Q4 join violation at stage=research, got:\n${v.join('\n')}`);
 });
 
+// stage=research Evidence Against presence (rule R8): golden already carries the heading -> clean.
+check('stage=research: ## Evidence Against present -> clean', () => {
+  const files = { intent: GOLDEN_INTENT, assumptions: GOLDEN_ASSUMPTIONS, research: GOLDEN_RESEARCH };
+  const v = runTrio(files, 'research');
+  assert.deepStrictEqual(v, [], `expected clean, got:\n${v.join('\n')}`);
+});
+
+// stage=research Evidence Against presence: heading removed -> violation naming it; no-stage untouched.
+check('stage=research: ## Evidence Against removed -> violation; no-stage untouched', () => {
+  const research = GOLDEN_RESEARCH.replace(/## Evidence Against\n.*?\n\n/s, '');
+  const files = { intent: GOLDEN_INTENT, assumptions: GOLDEN_ASSUMPTIONS, research };
+  assert.deepStrictEqual(runTrio(files), [], 'no-stage must not wedge on the Evidence Against rule');
+  const v = runTrio(files, 'research');
+  assert.ok(has(v, 'Evidence Against'), `expected an Evidence Against violation, got:\n${v.join('\n')}`);
+});
+
 // stage=spec terminal Q-join: golden resolves Q1 (Answers) ∪ Q2 (Finding) ∪ Q3 (ASSUMPTIONS link); Q4 is
 // unresolved (only in RESEARCH Unanswered), so it must appear as a `Q4` token in SPEC.md.
 check('stage=spec: unresolved Q4 absent from SPEC -> FAILS; SPEC citing Q4 -> passes', () => {
@@ -605,6 +621,65 @@ check('stage=plan: PLAN present but SPEC missing -> SPEC missing-file violation'
   const plan = '# Plan: export\n\n## Tasks\n- **T1** [tdd] scope=`a` deps=[] covers=[AC-1]: x\n';
   const v = runTrio({ intent: PLAN_INTENT, plan }, 'plan');
   assert.ok(v.some((x) => x.includes('SPEC.md') && x.includes('missing file')), `expected a SPEC missing-file violation, got:\n${v.join('\n')}`);
+});
+
+// ============================================================================
+// stage=plan: INTENT ## Decisions D-join (framework-steal decision 3)
+// ============================================================================
+
+// A fully-covering plan for PLAN_SPEC (all 3 ACs land in a task's covers=[]), so the plan arms below
+// isolate the D-join — no coverage/dangling noise. INTENT gains a ## Decisions section with D1.
+const COVER_PLAN = '# Plan: export\n\n## Tasks\n'
+  + '- **T1** [tdd] scope=`a` deps=[] covers=[AC-1, AC-2]: build core\n'
+  + '- **T2** [standard] scope=`b` deps=[] covers=[AC-3]: wire config\n';
+const DECISION_INTENT = PLAN_INTENT + '\n## Decisions\n'
+  + '- **D1**: exports run as an async job, not inline — reuse the report queue.\n';
+
+// D-join joined in SPEC: D1 token anywhere in SPEC.md counts.
+check('stage=plan D-join: D1 reflected in SPEC -> clean', () => {
+  const spec = PLAN_SPEC + '\n## Design notes\n- exports run async (D1)\n';
+  assert.deepStrictEqual(runTrio({ intent: DECISION_INTENT, spec, plan: COVER_PLAN }, 'plan'), []);
+});
+
+// D-join joined only in PLAN: a decision may legitimately surface at plan altitude only.
+check('stage=plan D-join: D1 reflected only in PLAN -> clean', () => {
+  const plan = '# Plan: export\n\n## Tasks\n'
+    + '- **T1** [tdd] scope=`a` deps=[] covers=[AC-1, AC-2]: build core\n'
+    + '- **T2** [standard] scope=`b` deps=[] covers=[AC-3]: wire the async job (D1)\n';
+  assert.deepStrictEqual(runTrio({ intent: DECISION_INTENT, spec: PLAN_SPEC, plan }, 'plan'), []);
+});
+
+// D-join unjoined: D1 in neither SPEC nor PLAN -> exactly the D-join violation (bare must not fire it).
+check('stage=plan D-join: D1 in neither SPEC nor PLAN -> violation; bare untouched', () => {
+  const files = { intent: DECISION_INTENT, spec: PLAN_SPEC, plan: COVER_PLAN };
+  const v = runTrio(files, 'plan');
+  assert.ok(has(v, 'D1'), `expected a D1 join violation, got:\n${v.join('\n')}`);
+  assert.strictEqual(v.length, 1, `expected only the D1 violation, got:\n${v.join('\n')}`);
+  assert.deepStrictEqual(runTrio(files), [], 'bare invocation must not fire the D-join');
+});
+
+// No ## Decisions section: the section is optional -> clean (PLAN_INTENT carries no Decisions).
+check('stage=plan D-join: no ## Decisions section -> clean', () => {
+  assert.deepStrictEqual(runTrio({ intent: PLAN_INTENT, spec: PLAN_SPEC, plan: COVER_PLAN }, 'plan'), []);
+});
+
+// D-id boundary guard: unjoined D1 must NOT be satisfied by a D10 token (substring match would wrongly
+// treat "D10" as citing "D1"), mirroring the Q10/Q1 spec-join guard.
+check('stage=plan D-join: D1 not satisfied by a D10 token -> flags exactly D1', () => {
+  const plan = '# Plan: export\n\n## Tasks\n'
+    + '- **T1** [tdd] scope=`a` deps=[] covers=[AC-1, AC-2]: build core\n'
+    + '- **T2** [standard] scope=`b` deps=[] covers=[AC-3]: wire config (D10)\n';
+  const v = runTrio({ intent: DECISION_INTENT, spec: PLAN_SPEC, plan }, 'plan');
+  assert.deepStrictEqual(v, ['PLAN.md: D1 decision appears as a token in neither SPEC.md nor PLAN.md'], `got:\n${v.join('\n')}`);
+});
+
+// No dup-D-N rule (dup-tolerant set): two **D1** entries, both joined -> clean, no duplicate violation.
+check('stage=plan D-join: duplicate D1 entries both joined -> clean (no dup-D rule)', () => {
+  const intent = PLAN_INTENT + '\n## Decisions\n'
+    + '- **D1**: run async, not inline — reuse the report queue.\n'
+    + '- **D1**: run async, not inline — restated after a re-gate.\n';
+  const spec = PLAN_SPEC + '\n## Design notes\n- exports run async (D1)\n';
+  assert.deepStrictEqual(runTrio({ intent, spec, plan: COVER_PLAN }, 'plan'), []);
 });
 
 // ---- CLI / exit-code edges (real process via spawnSync) ----

@@ -17,6 +17,7 @@
 
 ## Constraints
 - <perf / compat / security / deadline>
+- <hard constraint from a settled decision> (D1)
 
 ## Acceptance criteria
 - **AC-1** [truth|artifact|link|manual]: WHEN <trigger> THE SYSTEM SHALL <response>
@@ -58,6 +59,7 @@ notes.
 - [ ] No vague criteria ("fast", "user-friendly") — each is falsifiable.
 - [ ] Completeness sweep done — each implied error/edge/trust/concurrency category is surfaced as an AC or an explicit out-of-scope/`manual` note (not silently absent).
 - [ ] If INTENT.md exists: every `Q<N>` is resolved (INTENT Answers / RESEARCH Finding / ASSUMPTIONS entry) or appears in this SPEC as a `[NEEDS CLARIFICATION]` / `manual` AC **citing its `Q<N>`** (byte-checked: `intent-lint … stage=spec`).
+- [ ] If INTENT.md has `## Decisions`: every `D<N>` is reflected in this SPEC (or the PLAN) citing its token (byte-checked at plan exit: `intent-lint … stage=plan`).
 
 ## EARS quick reference (for acceptance criteria)
 Constrained requirement syntax; keywords always in this order:

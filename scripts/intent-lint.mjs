@@ -7,11 +7,16 @@
 //   • the 13 INTENT/ASSUMPTIONS rules (Goal/Coverage/Questions/Answers shape + the ASSUMPTIONS
 //     rejected-alternative, link-resolution, and [irreversible] propagation rules),
 //   • the RESEARCH.md sibling rules (header mode, Q-id-per-entry, no cross-section duplicate Q,
-//     confidence tags, source shape, greenfield-URL, Unanswered risk:), and
+//     confidence tags, source shape, greenfield-URL, Unanswered risk:), and a stage=research-gated
+//     ## Evidence Against presence check (heading only — no per-Q coverage), and
 //   • the stage=spec duplicate-AC-N rule (SPEC.md's ## Acceptance criteria section only: two or
 //     more bullets carrying the same **AC-<N>** ID → one violation per duplicated ID), and
 //   • the stage=plan coverage rules (every SPEC **AC-N** appears in some PLAN task's `covers=[…]`
-//     or under PLAN's ## Coverage gaps; every id inside a `covers=[…]` is a real SPEC AC).
+//     or under PLAN's ## Coverage gaps; every id inside a `covers=[…]` is a real SPEC AC), and
+//   • the stage=plan D-join (every INTENT **D-N** in ## Decisions appears as a token in SPEC.md OR
+//     PLAN.md — byte-loose like the Q-join). At stage=plan, NOT stage=spec: a decision may legitimately
+//     surface only at plan altitude, so a spec-seam check would false-fail; plan is the last mechanical
+//     gate before implement. No dup-D-N rule (dup-tolerant set — same asymmetry as the no-dup-Q rule).
 // SOURCE PARSE: a RESEARCH finding's source is the segment after the LINE's LAST ` — ` (answer prose may
 // contain interior spaced em dashes — use lastIndexOf/split().pop(), never split()[1]). The ASSUMPTIONS
 // basis rule keeps its FIRST-split semantics (pre-existing, documented, unchanged).
@@ -276,6 +281,12 @@ export function lint(intentPath, stage) {
     if (researchText === null) {
       violations.push(`${researchPath}: missing file`);
     } else {
+      // Rule R8: `## Evidence Against` heading must be present (presence only — no per-Q coverage;
+      // that per-finding honesty is author-checked, not lintable — see RESEARCH.md's DoD).
+      const rlines = researchText.split(/\r?\n/);
+      if (section(rlines, '## Evidence Against') === null) {
+        violations.push("RESEARCH.md: missing ## Evidence Against section (record 'none found' when empty)");
+      }
       for (const q of questions) {
         if (q.route === 'research' && !researchQids.has(q.id)) {
           violations.push(`RESEARCH.md: route=research ${q.id} appears in neither Findings nor Unanswered`);
@@ -348,6 +359,18 @@ export function lint(intentPath, stage) {
       for (const acid of covered) {
         if (!specAcs.has(acid)) {
           violations.push(`PLAN.md: covers= cites ${acid} not in SPEC ## Acceptance criteria`);
+        }
+      }
+
+      // D-join: every INTENT ## Decisions D-N must appear as a token in SPEC.md OR PLAN.md. Byte-loose
+      // like the terminal Q-join (anywhere in either file counts; the semantic half lives in DoD prose).
+      // `## Decisions` is optional — absent → no D-N to join → clean. No dup-D-N rule (dup-tolerant set).
+      const decisionLines = (section(lines, '## Decisions') || []).filter((l) => /^\s*-\s+\*\*D\d+\*\*/.test(l));
+      for (const line of decisionLines) {
+        const did = `D${line.match(/\*\*D(\d+)\*\*/)[1]}`;
+        const token = new RegExp(`${did}(?!\\d)`);
+        if (!token.test(specText) && !token.test(planText)) {
+          violations.push(`PLAN.md: ${did} decision appears as a token in neither SPEC.md nor PLAN.md`);
         }
       }
     }

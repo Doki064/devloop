@@ -72,6 +72,7 @@ Check-method tag (how verify confirms it):
 - [ ] No bare `[NEEDS CLARIFICATION]` remains — each is resolved or recorded as a `manual` named hole.
 - [ ] No vague criteria ("fast", "user-friendly") — each is falsifiable.
 - [ ] Completeness sweep done — each implied error/edge/trust/concurrency category is surfaced as an AC or an explicit out-of-scope/`manual` note (not silently absent).
+- [ ] If INTENT.md exists: every `Q<N>` is resolved (INTENT Answers / RESEARCH Finding / ASSUMPTIONS entry) or appears in this SPEC as `[NEEDS CLARIFICATION]` / a `manual` AC.
 
 ---
 
@@ -228,14 +229,118 @@ source; no drift for a consumer to reconcile).
 
 ---
 
+The front-end trio (INTENT · RESEARCH · ASSUMPTIONS): triage seeds INTENT (all-Clear → none of
+these files exist; the pipeline enters at spec). Discuss appends Answers or, autonomous, writes
+ASSUMPTIONS. Research writes RESEARCH. Resolution is derived by Q-id join (terminal check: the
+SPEC DoD) — no status fields, single writer per section.
+
+## INTENT.md
+- **Purpose:** the feature's front door — goal + uncertainty coverage + the open-question ledger
+  that gates and bounds discuss/research. The list is the signal, not a vibe.
+- **Location:** `specs/<slug>/INTENT.md` · **Durability:** EPHEMERAL (archived on ship).
+- **Writers:** triage seeds Goal/Coverage/Questions; discuss appends Answers. Absent file =
+  all-Clear (front-end skipped).
+
+```markdown
+# Intent: <feature name>
+
+## Goal
+<1–2 sentences — the ask in the user's terms; input to SPEC Goal>
+
+## Coverage
+| category | status | note |
+|----------|--------|------|
+| goal | Clear | |
+| scope | Partial | → Q1 |
+| success-criteria | Missing | → Q2 |
+| constraints | Partial | → Q3 |
+| integration-surface | Missing | → Q4 |
+| edge/failure | Clear | |
+
+## Questions
+- **Q1** [scope] route=user affects=SPEC split="admins only vs all users": Who can trigger the export?
+- **Q2** [success-criteria] route=research affects=SPEC.AC split="p95<200ms vs no target": Is there a latency target?
+- **Q3** [constraints] route=user affects=SPEC [irreversible] split="soft-delete vs hard-delete": May exports purge source rows?
+- **Q4** [integration-surface] route=research affects=PLAN split="reuse report queue vs new worker": Is the report queue reusable?
+
+## Answers
+- **Q1**: all users; admins additionally get bulk export.
+```
+
+Question fields: stable `Q<N>` (never reused/renumbered) · `[category]` from the coverage taxonomy ·
+`route=user|research` (assume-route questions become ASSUMPTIONS entries instead, per triage filter) ·
+`affects=<named downstream artifact>` (a section suffix like `SPEC.AC` is allowed for precision; no
+artifact → drop or assume) · `split="<reading A> vs <reading B>"` (the interpretation divergence that
+makes it a real question) · optional `[irreversible]`. Resolution is **derived by Q-id join**
+(Answers / RESEARCH Findings / ASSUMPTIONS entry / else open) — never stored as a status field.
+<!-- DEFERRED(Phase 3): fix the exact coverage-taxonomy category list at the triage build slice — must reconcile with the spec completeness-sweep categories (skills/spec/SKILL.md step 4). -->
+
+**Definition of Done:**
+- [ ] Goal present.
+- [ ] One Coverage row per taxonomy category; every Partial/Missing row points to ≥1 `Q<N>` or notes the filter that dropped it.
+- [ ] ≤10 questions total for the feature (re-gating included; the ≤5-per-gate cap is enforced by triage at write time — not checkable from this file).
+- [ ] Every question has category, route, `affects=`, and `split=`; no duplicates.
+- [ ] Every `## Answers` entry references a real `Q<N>`.
+
+---
+
+## RESEARCH.md
+- **Purpose:** distilled findings answering the INTENT questions routed to research — evidence-up,
+  a decision record, never a transcript. Bounded: no finding without a Q-id.
+- **Location:** `specs/<slug>/RESEARCH.md` · **Durability:** EPHEMERAL (archived on ship).
+- **Writer:** researcher agent (parallel researchers merge into one file). Header records mode.
+
+```markdown
+# Research: <feature name>  (mode=greenfield|brownfield)
+
+## Findings
+- **Q2** [high]: p95<200ms is the platform norm; adopt it. — <url | file:line>
+
+## Unanswered
+- **Q4**: queue internals undocumented → risk: PLAN may double-build a worker; flag at plan review.
+```
+
+One line per finding: `Q<N>` · confidence `[high|med|low]` · the answer · a concrete source
+(external URL for greenfield; `file:line` allowed in brownfield). Unanswered questions become
+**named risks** — spec converts each to `[NEEDS CLARIFICATION]` or a `manual` AC.
+
+**Definition of Done:**
+- [ ] Header records `mode`.
+- [ ] Every INTENT question with `route=research` appears exactly once — in Findings **or** Unanswered.
+- [ ] Every finding has a confidence tag and a concrete source; no finding without a `Q<N>` (no unsolicited research).
+- [ ] Every Unanswered entry names its downstream risk.
+
+---
+
+## ASSUMPTIONS.md
+- **Purpose:** defaults chosen without the user — the audit trail that makes autonomous degrade
+  safe. Ship surfaces the whole file in the PR for human confirmation ([irreversible] first).
+- **Location:** `specs/<slug>/ASSUMPTIONS.md` · **Durability:** EPHEMERAL (archived on ship).
+- **Writers:** discuss in autonomous mode (self-Q&A); triage's record-as-assumption filter.
+
+```markdown
+# Assumptions: <feature name>
+
+- **A1** (Q3): assume soft-delete, not hard-delete — reversible default when the user is absent. affects=SPEC [irreversible]
+- **A2** (—): assume CSV output, not XLSX — no format stated; CSV is the platform default. affects=PLAN
+```
+
+Fields: stable `A<N>` · `(Q<N>)` when it resolves a ledger question, `(—)` for a spot default with
+no gate question · chosen **and** rejected reading (mirrors `split=`) · one-line basis ·
+`affects=` · optional `[irreversible]`. **A-numbering is append-only:** whichever stage writes next
+continues at the next free `A<N>` — one appender at a time (stages run sequentially, including
+re-gated re-runs), the same single-writer principle as INTENT's sections.
+
+**Definition of Done:**
+- [ ] Every entry: `A<N>`, chosen default + rejected alternative, basis, `affects=`.
+- [ ] `(Q<N>)` link present whenever the entry resolves an INTENT question.
+- [ ] An entry resolving an `[irreversible]` `Q<N>` carries `[irreversible]` (the tag propagates, so ship surfaces it first — never silently assumed).
+- [ ] No entry duplicates a user answer or research finding (those are not assumptions).
+
+---
+
 ## Stubbed artifacts (schemas specified in their build phase)
-<!-- DEFERRED(Phase 3): INTENT.md schema — goal + open-questions emitted by discuss; fill when the discuss stage is built. -->
-<!-- DEFERRED(Phase 3): RESEARCH.md schema — findings bounded by open-questions; fill when the research stage is built. -->
-<!-- DEFERRED(Phase 3): ASSUMPTIONS.md schema — recorded defaults/interpretations; fill when discuss/gating lands. -->
 <!-- Resume core (drive `.done` markers + `.devloop/active` + resume-entry) + doctor derive per-stage
      state from markers + git directly — no authored PROGRESS.md needed for resume or diagnosis.
      DEFERRED(Phase 5): PROGRESS.md schema — a *derived* human-readable per-task snapshot; fill when a consumer needs it (no consumer today). -->
-- **INTENT.md** (ephemeral, `specs/<slug>/`) — `DEFERRED(Phase 3)`.
-- **RESEARCH.md** (ephemeral, `specs/<slug>/`) — `DEFERRED(Phase 3)`.
-- **ASSUMPTIONS.md** (ephemeral, `specs/<slug>/`) — `DEFERRED(Phase 3)`.
 - **PROGRESS.md** (derived, `specs/<slug>/`) — `DEFERRED(Phase 5)`.

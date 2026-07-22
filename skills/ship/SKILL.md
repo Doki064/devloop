@@ -24,6 +24,9 @@ this feature's bounded set — never the whole project:
 - `specs/<slug>/VERIFY.md` — the gate. Read its header `stage`, its `## Verdict`, and any `MANUAL`
   trace-matrix rows.
 - `specs/<slug>/SPEC.md` — the Goal line, for the PR title/body.
+- `specs/<slug>/ASSUMPTIONS.md` if present — defaults chosen without the user (autonomous degrade);
+  every entry goes into the PR body for human confirmation, `[irreversible]` entries first. Absent
+  file = no assumptions were taken.
 
 The VERIFY.md format is defined in `${CLAUDE_PLUGIN_ROOT}/docs/ARTIFACTS.md` (the VERIFY.md section);
 read the verdict and rows against that schema rather than guessing.
@@ -70,6 +73,9 @@ read the verdict and rows against that schema rather than guessing.
    - **Body**, lean and fixed-shape — no transcript, no ceremony:
      - the verify verdict and AC pass/fail counts;
      - a `## Manual checks` checklist of the `MANUAL` named-hole rows (omit the section if none);
+     - an `## Assumptions` section surfacing every `specs/<slug>/ASSUMPTIONS.md` entry verbatim,
+       `[irreversible]` entries first (omit the section when the file is absent) — the human confirms
+       or vetoes the autonomous defaults here, per the ASSUMPTIONS contract in ARTIFACTS.md;
      - a link to `specs/<slug>/SPEC.md`.
 
 7. **Mark shipped + clear the active pointer** (only after the push/PR of step 5–6 succeeds — a failed

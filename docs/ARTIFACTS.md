@@ -66,8 +66,22 @@ Check-method tag (how verify confirms it):
 - [NEEDS CLARIFICATION: <what's unresolved> (Q4)]   (resolve before ship, or convert to a `manual` AC; cite the `Q<N>` when carrying an unresolved INTENT question)
 ```
 
+**Revision (a spec re-run or a mid-pipeline re-gate).** Revise in place — never renumber:
+- **Amend** — a criterion whose meaning changed keeps its `AC-N` and gets new text
+  (downstream `covers=` and TDD scopes hang on the ID; verify re-grades it).
+- **Add** — next free `AC-N` above the **highest ever used**: a whole-file scan that
+  counts `(was AC-N)` notes too (append-only, the same discipline as `Q<N>`/`A<N>`).
+- **Withdraw** — the criterion leaves `## Acceptance criteria` and lands under
+  `## Out of scope` as an unbolded `- (was AC-N) <what + why withdrawn>` note: the ID
+  stays in-file so it can never be reused, and the unbolded form is invisible to every
+  `**AC-N** [tag]:` consumer (verifier walk, plan coverage, lint).
+- **Replace** (contract restart, IDs reset) is legal only while **no** `PLAN.md` and
+  **no** implementation commits exist for the slug — after that, always revise: a replace
+  would orphan the trace matrix and the TDD commit history.
+
 **Definition of Done:**
 - [ ] Every criterion has a stable `AC-N` ID (never reused/renumbered), a check-method tag, and EARS form.
+- [ ] No duplicate `AC-N` inside `## Acceptance criteria` (byte-checked: `intent-lint … stage=spec`).
 - [ ] Goal, In scope, and Out of scope are all present.
 - [ ] No bare `[NEEDS CLARIFICATION]` remains — each is resolved or recorded as a `manual` named hole.
 - [ ] No vague criteria ("fast", "user-friendly") — each is falsifiable.
@@ -238,8 +252,9 @@ SPEC DoD) — no status fields, single writer per section.
 - **Purpose:** the feature's front door — goal + uncertainty coverage + the open-question ledger
   that gates and bounds discuss/research. The list is the signal, not a vibe.
 - **Location:** `specs/<slug>/INTENT.md` · **Durability:** EPHEMERAL (archived on ship).
-- **Writers:** triage seeds Goal/Coverage/Questions; discuss appends Answers. Absent file =
-  all-Clear (front-end skipped).
+- **Writers:** triage seeds Goal/Coverage/Questions; discuss appends Answers (a determined
+  mid-pipeline correction may seed its Answer in the same triage write — see the discuss
+  skill's re-gate path). Absent file = all-Clear (front-end skipped).
 
 ```markdown
 # Intent: <feature name>
@@ -277,7 +292,7 @@ makes it a real question) · optional `[irreversible]`. Resolution is **derived 
 
 **Definition of Done:**
 - [ ] Goal present.
-- [ ] One Coverage row per taxonomy category; every Partial/Missing row points to ≥1 `Q<N>` or notes the filter that dropped it.
+- [ ] One Coverage row per taxonomy category; every Partial/Missing row points to ≥1 `Q<N>` or notes the filter or at-cap landing that recorded it.
 - [ ] ≤10 questions total for the feature (re-gating included; the ≤5-per-gate cap is enforced by triage at write time — not checkable from this file).
 - [ ] Every question has category, route, `affects=`, and `split=`; no duplicates.
 - [ ] Every `## Answers` entry references a real `Q<N>`.

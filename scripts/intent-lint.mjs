@@ -4,9 +4,11 @@
 // path; the sibling files are derived as `dirname(intent)/<FILE>`. Checks the byte-checkable rules the
 // schemas pin — no semantic judgment:
 //   • the 13 INTENT/ASSUMPTIONS rules (Goal/Coverage/Questions/Answers shape + the ASSUMPTIONS
-//     rejected-alternative, link-resolution, and [irreversible] propagation rules), and
+//     rejected-alternative, link-resolution, and [irreversible] propagation rules),
 //   • the RESEARCH.md sibling rules (header mode, Q-id-per-entry, no cross-section duplicate Q,
-//     confidence tags, source shape, greenfield-URL, Unanswered risk:).
+//     confidence tags, source shape, greenfield-URL, Unanswered risk:), and
+//   • the stage=spec duplicate-AC-N rule (SPEC.md's ## Acceptance criteria section only: two or
+//     more bullets carrying the same **AC-<N>** ID → one violation per duplicated ID).
 // SOURCE PARSE: a RESEARCH finding's source is the segment after the LINE's LAST ` — ` (answer prose may
 // contain interior spaced em dashes — use lastIndexOf/split().pop(), never split()[1]). The ASSUMPTIONS
 // basis rule keeps its FIRST-split semantics (pre-existing, documented, unchanged).
@@ -268,10 +270,24 @@ export function lint(intentPath, stage) {
     if (specText === null) {
       violations.push(`${specPath}: missing file`);
     } else {
+      // Rule S1: no duplicate AC-N within ## Acceptance criteria (section-scoped — a withdrawn
+      // `(was AC-N)` note under ## Out of scope, or unbolded prose elsewhere, must not count).
+      const acSection = section(specText.split(/\r?\n/), '## Acceptance criteria') || [];
+      const acCounts = new Map();
+      for (const line of acSection) {
+        const m = line.match(/\*\*AC-(\d+)\*\*/);
+        if (!m) continue;
+        const acid = `AC-${m[1]}`;
+        acCounts.set(acid, (acCounts.get(acid) || 0) + 1);
+      }
+      for (const [acid, count] of acCounts) {
+        if (count > 1) violations.push(`SPEC.md: ${acid} is duplicated in ## Acceptance criteria`);
+      }
+
       // Terminal Q-join: resolved = INTENT Answers ∪ RESEARCH Findings (NOT Unanswered) ∪ ASSUMPTIONS links.
       const resolved = new Set([...answerQids, ...findingsQids, ...assumptionLinkedQids]);
       for (const q of questions) {
-        if (!resolved.has(q.id) && !specText.includes(q.id)) {
+        if (!resolved.has(q.id) && !new RegExp(`${q.id}(?!\\d)`).test(specText)) {
           violations.push(`SPEC.md: ${q.id} is unresolved and its Q token appears nowhere in SPEC.md`);
         }
       }

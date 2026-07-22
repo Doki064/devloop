@@ -59,6 +59,7 @@ Check-method tag (how verify confirms it):
 
 ## Acceptance criteria
 - **AC-1** [truth|artifact|link|manual]: WHEN <trigger> THE SYSTEM SHALL <response>
+  e.g. <concrete input> → <concrete observable outcome>   (optional, only for ambiguous ACs)
 - **AC-2** [artifact]: THE SYSTEM SHALL <always-true property / required artifact>
 - **AC-3** [truth]: IF <condition> THEN THE SYSTEM SHALL <response>
 
@@ -66,9 +67,18 @@ Check-method tag (how verify confirms it):
 - [NEEDS CLARIFICATION: <what's unresolved> (Q4)]   (resolve before ship, or convert to a `manual` AC; cite the `Q<N>` when carrying an unresolved INTENT question)
 ```
 
+**Example sub-lines.** An AC may carry an optional indented, unbolded `e.g.` sub-line (concrete
+input → concrete observable outcome) anchoring an ambiguous criterion. Illustrative, not
+normative — and being unbolded it is invisible to every `**AC-N** [tag]:` consumer (verifier
+walk, plan coverage, `stage=spec` lint), the same invisibility trick as `(was AC-N)` withdraw
+notes.
+
 **Revision (a spec re-run or a mid-pipeline re-gate).** Revise in place — never renumber:
 - **Amend** — a criterion whose meaning changed keeps its `AC-N` and gets new text
-  (downstream `covers=` and TDD scopes hang on the ID; verify re-grades it).
+  (downstream `covers=` and TDD scopes hang on the ID; verify re-grades it). The amended
+  criterion also gains an indented, unbolded `(amended: <one-line what changed / why>)`
+  sub-line under the AC bullet — invisible to `**AC-N** [tag]:` consumers, the same trick as
+  `e.g.` sub-lines and `(was AC-N)` notes.
 - **Add** — next free `AC-N` above the **highest ever used**: a whole-file scan that
   counts `(was AC-N)` notes too (append-only, the same discipline as `Q<N>`/`A<N>`).
 - **Withdraw** — the criterion leaves `## Acceptance criteria` and lands under
@@ -142,7 +152,7 @@ marker · `covers=[AC-ids]` for the trace matrix.
   git log, **never** the implementer's narrative.
 - **Location:** `specs/<slug>/VERIFY.md` · **Durability:** EPHEMERAL (archived on ship).
 - **Parameterized:** `stage=plan` (goal-backward coverage check) or `stage=impl` (run tests +
-  TDD-commit check).
+  TDD-commit check). Same-path, latest-write-wins — the header records which stage wrote it.
 
 ```markdown
 # Verify: <feature name>  (stage=plan|impl)

@@ -60,13 +60,19 @@ only what informs this feature, never the whole project:
    follow-up that converts it to a tagged EARS statement ("fast = WHEN load hits 100 rps THE SYSTEM
    SHALL keep p95 < 200ms" → `truth`). Two or three rounds of this is normal.
 
+   When an AC's trigger or response still admits more than one reading ("reject invalid
+   date" — `2026-02-30`? empty?), anchor it with an indented, **unbolded** `e.g.` sub-line
+   under the AC bullet: concrete input → concrete observable outcome. The example is
+   illustrative, not normative — the EARS statement stays the contract; the example is the
+   first test case the implementer writes.
+
 3. **Assign a stable criterion ID** to each (`AC-1`, `AC-2`, …). Plan, implement, and verify
    reference these IDs to build the trace matrix (criterion ↔ test). Never reuse or renumber an ID
    once assigned.
 
    **Revising an existing SPEC** follows the Revision rules in the ARTIFACTS SPEC section: **amend** in
-   place under the stable `AC-N` (new text, same ID); **add** at the next free `AC-N` **above the
-   highest ever used** — a whole-file scan that counts `(was AC-N)` notes too; **withdraw** by
+   place under the stable `AC-N` (new text, same ID, plus an unbolded `(amended: …)` sub-line);
+   **add** at the next free `AC-N` **above the highest ever used** — a whole-file scan that counts `(was AC-N)` notes too; **withdraw** by
    relocating the criterion out of `## Acceptance criteria` to `## Out of scope` as an unbolded `- (was
    AC-N) <what + why withdrawn>` note (the ID stays in-file so it can never be reused). That ARTIFACTS
    block is the source of truth — on any divergence it wins.

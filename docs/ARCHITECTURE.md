@@ -10,7 +10,7 @@ Per feature: `discuss → research → SPEC → plan → implement → verify �
 
 | Stage | Kind | Notes |
 |---|---|---|
-| discuss | skill (inline) | Interactive Q&A; degrades to autonomous (self-Q&A, records assumptions). Emits INTENT + open-questions. |
+| discuss | skill (inline) | Interactive Q&A; degrades to autonomous (self-Q&A, records ASSUMPTIONS). Appends Answers to the triage-seeded INTENT (triage emits the open-questions ledger). |
 | research | skill→agent | Isolated, may fan out parallel researchers. Mode-aware (greenfield=external; brownfield=+internal). Bounded by open-questions; unanswered→named risks. |
 | spec | skill (inline) | Convergent. DURABLE SPEC.md: mechanically-checkable criteria (Truths/Artifacts/Links) with criterion IDs. |
 | plan | skill→agent | SPEC → tasks tagged `tdd|standard`, scope-token, `[P]` parallel marker, deps. Each task fits **one context window** (coherence-cliff law). |

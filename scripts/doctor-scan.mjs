@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { lint } from './intent-lint.mjs';
 
 function exists(p) {
   try { fs.statSync(p); return true; } catch { return false; }
@@ -90,6 +91,16 @@ export function doctorScan(slug, { fix = false, cwd = process.cwd(), mode = 'att
   const dirtyTree = gitDirtyTree(cwd);
   const committedMarkers = gitCommittedMarkers(cwd);
 
+  // Front-end awareness: INTENT.md present -> lint it BARE (no stage token). Stage-gated joins
+  // (stage=research/spec) are stage-owned self-checks, not doctor's — a stage token here would wedge
+  // every other stage's resume on a coverage rule it doesn't own (e.g. a route=research Q with no
+  // RESEARCH.md yet, mid-discuss). Absent INTENT.md -> field stays empty, behavior byte-identical to
+  // pre-front-end doctor. discuss.done/research.done deliberately do NOT join the consistent-prefix
+  // stale-marker rule below (no mandatory artifact of their own) — they're covered by the committed-
+  // marker git check above like any other marker.
+  const intentPath = join(specDir, 'INTENT.md');
+  const intentLintViolations = exists(intentPath) ? lint(intentPath) : [];
+
   const activePath = join(cwd, '.devloop', 'active');
   let stalePointer = false;
   if (exists(activePath)) {
@@ -126,13 +137,24 @@ export function doctorScan(slug, { fix = false, cwd = process.cwd(), mode = 'att
   let verdict = 'CLEAN';
   const unresolvedStale = staleMarkers.length > 0;
   const committedInAuto = mode === 'auto' && committedMarkers.length > 0;
-  if (dirtyTree || unresolvedStale || committedInAuto) {
+  const intentViolationsInAuto = mode === 'auto' && intentLintViolations.length > 0;
+  const intentViolationsInAttended = mode === 'attended' && intentLintViolations.length > 0;
+  if (dirtyTree || unresolvedStale || committedInAuto || intentViolationsInAuto) {
+    // auto: an unfixable prose/shape violation would wedge a downstream self-check on bytes doctor
+    // cannot safely rewrite — BLOCK, never worked around.
     verdict = 'BLOCK';
-  } else if (fixed.length > 0 || (mode === 'attended' && committedMarkers.length > 0) || stalePointer) {
+  } else if (
+    fixed.length > 0 ||
+    (mode === 'attended' && committedMarkers.length > 0) ||
+    stalePointer ||
+    intentViolationsInAttended
+  ) {
+    // attended: named remedy is fix INTENT.md per the printed violations, or delete the front-end trio
+    // (INTENT.md/RESEARCH.md/ASSUMPTIONS.md) to restart the front door — never doctor-fixable itself.
     verdict = 'ISSUES';
   }
 
-  return { slug, staleMarkers, dirtyTree, stalePointer, committedMarkers, fixed, verdict };
+  return { slug, staleMarkers, dirtyTree, stalePointer, committedMarkers, intentLintViolations, fixed, verdict };
 }
 
 function main() {

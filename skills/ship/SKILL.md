@@ -23,8 +23,9 @@ Slugify it (lowercase, hyphens) → `<slug>`. `<slug>` only locates the
 spec files; ship pushes the **current git branch**, which is not derived from the slug. Read only
 this feature's bounded set — never the whole project:
 
-- `specs/<slug>/VERIFY.md` — the gate. Read its header `stage`, its `## Verdict`, and any `MANUAL`
-  trace-matrix rows.
+- `specs/<slug>/VERIFY.md` — the gate. Read its header `stage`, its `## Verdict`, any `MANUAL`
+  trace-matrix rows, and the `## Reverse trace` → **Unrequested** advisory list (scope-creep notes to
+  echo for the human; never a gate).
 - `specs/<slug>/SPEC.md` — the Goal line, for the PR title/body.
 - `specs/<slug>/ASSUMPTIONS.md` if present — defaults chosen without the user (autonomous degrade);
   every entry goes into the PR body for human confirmation, `[irreversible]` entries first. Absent
@@ -47,9 +48,11 @@ read the verdict and rows against that schema rather than guessing.
    ship**: surface the failing / BLOCK rows and stop. This is the "ship blocked on verify PASS" gate
    — never paper over it.
 
-3. **Collect the manual named holes.** Gather every trace-matrix row with result `MANUAL`. These are
-   neither PASS nor FAIL — they are the named holes a human resolves at the PR, so they go into the
-   PR body as a checklist (step 6). An empty set is fine.
+3. **Collect the manual named holes + the unrequested advisories.** Gather every trace-matrix row with
+   result `MANUAL` (the named holes a human resolves at the PR → checklist in step 6). Also gather the
+   `## Reverse trace` → **Unrequested** list — scope-creep notes the verifier raised; they never gate
+   (they did not block verify), but they surface in the PR body for the human to accept or trim at the
+   checkpoint. Either set may be empty.
 
 4. **Git safety.** Resolve the current branch (`git branch --show-current`) and the default branch
    (`git symbolic-ref --short refs/remotes/origin/HEAD` → strip `origin/`; if that ref is absent,
@@ -75,6 +78,9 @@ read the verdict and rows against that schema rather than guessing.
    - **Body**, lean and fixed-shape — no transcript, no ceremony:
      - the verify verdict and AC pass/fail counts;
      - a `## Manual checks` checklist of the `MANUAL` named-hole rows (omit the section if none);
+     - an `## Unrequested changes` section listing the VERIFY.md **Unrequested** advisories verbatim,
+       flagged as advisory scope-creep for the human to accept or trim (omit the section if none) —
+       these never gated the ship, they are surfaced for the checkpoint decision;
      - an `## Assumptions` section surfacing every `specs/<slug>/ASSUMPTIONS.md` entry verbatim,
        `[irreversible]` entries first (omit the section when the file is absent) — the human confirms
        or vetoes the autonomous defaults here, per the ASSUMPTIONS contract in

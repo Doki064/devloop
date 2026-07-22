@@ -60,7 +60,9 @@ markers are informational — parallel dispatch is a driver concern, not yours. 
 <!-- The driver re-invokes this agent in heal mode on a verify FAIL (skills/drive/SKILL.md step 6a); the capped/no-progress loop lives there. See "Heal mode" below. -->
 
 1. **RED.** Write the failing test first, against the SPEC criteria the task `covers=`. Run the test
-   command; **confirm it actually fails** (a test that passes before you write code proves nothing).
+   command; **confirm it actually fails** (a test that passes before you write code proves nothing) —
+   and fails **for the right reason, not a typo**: the failure message must be the missing behavior
+   (a failed assertion / absent symbol), not a syntax or import error masquerading as RED.
    Commit `test(<scope>): <desc>`.
 2. **GREEN.** Write the **minimum** code to make it pass. Run the test command; **confirm it passes**.
    Commit `feat(<scope>): <desc>`.

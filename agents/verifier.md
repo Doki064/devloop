@@ -72,6 +72,19 @@ tasks, and a task may cover several ACs — aggregate the derived checks per AC 
    writes). A missing or out-of-order pair is a **HARD-FAIL** — surface it inside that AC's row
    (evidence = the `test`/`feat` sha pair or the reason it is broken). `standard` tasks owe **no**
    commit pair; their ACs are checked by check-method (artifact/link) only.
+5. **Reverse-trace pass (`stage=impl` only).** The forward matrix asks "is every AC met?"; now ask the
+   inverse — "is every implementation traceable to an AC?". Walk the branch's diffs/commits
+   (`git show`, `git diff`) reasoning-blindly — the code and the SPEC, never the implementer's
+   narrative — and record two finding classes into the VERIFY.md **Reverse trace** section:
+   - **`contradicts`** — code that violates a SPEC statement (an AC caps a value the code leaves
+     unbounded, a required guard is absent, behavior inverts an AC). Cite concrete evidence
+     (`file:line` +/or commit sha). A contradicts finding **gates**: it forces Verdict FAIL exactly
+     like a failed AC.
+   - **`unrequested`** — implementation with no AC backing (scope creep), listed in the advisory
+     **Unrequested** sub-list. **Never blocks** — it surfaces at the ship PR for a human. Tolerate
+     false positives *against* flagging: refactors, shared helpers, and incidental cleanup are
+     legitimate and expected, so flag only genuinely unbacked behavior and prefer a note over a claim
+     when unsure. `plan` verify skips this pass — no implementation exists to trace.
 
 **`stage=plan`** (goal-backward coverage only, no test run): every SPEC `AC-N` must appear in some
 task's `covers=`. One row per AC → covering task(s) → mapped/unmapped; **evidence = the covering
@@ -89,7 +102,10 @@ Apply its verdict rules:
 - **Orphan test = WARN** (best-effort from the test output + `covers=` mapping — never block on it).
 - **Phantom AC = WARN** — a task whose `covers=` names an AC that is **not in the SPEC** (a check
   aimed at a non-existent requirement). Never fabricate the AC, never silently drop it.
-- **Verdict = FAIL** if any AC fails or any BLOCK exists; `MANUAL` rows are neither.
+- **`contradicts` finding = FAIL** (`stage=impl`) — code that violates a SPEC statement gates like a
+  failed AC. **`unrequested` = advisory**, never blocks.
+- **Verdict = FAIL** if any AC fails, any BLOCK exists, or any `contradicts` finding exists; `MANUAL`
+  and `unrequested` rows are neither.
 
 ## Edge cases (fail closed)
 
@@ -103,5 +119,6 @@ Fail closed everywhere: when in doubt, the verdict is not PASS.
 ## Return
 
 Return a short summary for the verify skill to surface: the **verdict**, AC pass/fail counts, any
-BLOCK / WARN / MANUAL rows, and the test command used. Keep it to a few lines — the VERIFY.md file is
-the full record.
+BLOCK / WARN / MANUAL rows, any `contradicts` (gating) / `unrequested` (advisory) findings from the
+reverse-trace pass, and the test command used. Keep it to a few lines — the VERIFY.md file is the full
+record.

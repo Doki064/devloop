@@ -96,12 +96,15 @@ or a BLOCK under `## Unmapped`. For each:
 - **The AC has a committed `test(<scope>)`** → trace to that test, run it (run it **plainly**, e.g.
   `<test command> <path>` — no shell redirection like `> out`: the `heal-guard` over-blocks a mutating
   token such as `>` that co-occurs with a frozen test path), change **code** only to make it pass, and
-  commit the fix as `feat(<scope>): <desc>` (the same GREEN contract above). **Never edit a test or the
-  SPEC** — the `heal-guard` hook denies it, and doing so would reward-hack the reasoning-blind verifier. If the *only* possible fix is a test/SPEC change, **stop and surface it** —
-  that is a human decision, not something to paper over.
+  commit the fix as `feat(<scope>): <desc>` (the same GREEN contract above). This is the **in-place
+  tier** (the heal loop itself) — no REGATE line. **Never edit a test or the SPEC** — the `heal-guard`
+  hook denies it, and doing so would reward-hack the reasoning-blind verifier. If the *only* possible
+  fix is a test/SPEC change, **stop and surface** `REGATE spec-invalidating: <discovery + evidence
+  (file:line / AC-N / T-N)> — <what it invalidates>` — that is a human decision, not something to paper over.
 - **No committed test, or a BLOCK** (a missing test, or a `truth` AC whose `tdd` task never got a
-  `test(<scope>)` commit) → this is a **coverage/plan gap, not a code fix**. **Stop and surface
-  immediately** (re-plan territory); do not fabricate a test or a fix. The driver early-exits on this.
+  `test(<scope>)` commit) → this is a **coverage/plan gap, not a code fix**. **Stop and surface**
+  `REGATE plan-only: <discovery + evidence (file:line / AC-N / T-N)> — <what it invalidates>` (re-plan
+  territory); do not fabricate a test or a fix. The driver early-exits on this.
 
 Return the `feat(<scope>)` fixes you committed, or the stop-and-surface reason, so the driver can
 re-verify or early-exit.
@@ -113,9 +116,20 @@ re-verify or early-exit.
   fabricate the criterion or silently drop the task.
 - **A `tdd` task can't reach GREEN, or the test command errors** → stop, leave the failing state
   intact, and report it. Fail closed: never fake a pass, never weaken the test to go green.
+- **The SPEC itself is wrong** (a mid-task discovery that an `AC-N` contradicts reality, another AC, or
+  a dependency contract) → **stop after the current committed state** and surface `REGATE
+  spec-invalidating: <discovery + evidence (file:line / AC-N / T-N)> — <what it invalidates>`.
+  Continuing against a known-wrong contract manufactures code verify will happily PASS against the
+  wrong SPEC (silent wrongness) — a human decision, not something to build past.
+- **Only the task breakdown is wrong** (the planned approach is impossible but the SPEC is satisfiable
+  another way) → stop and surface `REGATE plan-only: <discovery + evidence> — <what it invalidates>`.
+- **A task-internal mismatch** (the discovery breaks only *this* task, SPEC and plan intact) → fix in
+  place, no REGATE line. Completed tasks stay committed on every path above.
 
 ## Return
 
 Return a short summary for the implement skill to surface: tasks completed, the tdd/standard split,
 the commit subjects (and shas) produced, the test command used, and any task not driven to GREEN or
-risk found. Keep it to a few lines — the git log and working tree are the full record.
+risk found. When a discovery forced a stop, include the single `REGATE <spec-invalidating|plan-only>:
+…` line (evidence mandatory — `file:line` / `AC-N` / `T-N`; an evidence-free REGATE is not actionable).
+Keep it to a few lines — the git log and working tree are the full record.

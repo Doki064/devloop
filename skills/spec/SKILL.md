@@ -35,8 +35,11 @@ only what informs this feature, never the whole project:
   **depends[]** (upstream features whose SPECs constrain this one). Treat these as given; ask the
   user only to fill what the roadmap leaves open.
   <!-- DEFERRED(Phase 4): creating/updating this feature's ROADMAP row (risk/depends/Boundary) is a multi-feature concern; for now a missing row just means asking the user for the boundary. -->
-- `specs/<slug>/SPEC.md` if it already exists — read it and ask whether to revise or replace. Never
-  silently overwrite a contract.
+- `specs/<slug>/SPEC.md` if it already exists — never silently overwrite a contract. Ask whether to
+  **revise or replace** only while no downstream consumer exists (no `specs/<slug>/PLAN.md` and no
+  implementation commits for the slug). Once downstream artifacts trace to `AC-N`s, **revise — never
+  replace** (replace orphans the trace matrix + the TDD commit history). Under a re-gate the downstream
+  exists by definition → always revise; see the revision note in the Process below.
 
 ## Process
 
@@ -60,6 +63,13 @@ only what informs this feature, never the whole project:
 3. **Assign a stable criterion ID** to each (`AC-1`, `AC-2`, …). Plan, implement, and verify
    reference these IDs to build the trace matrix (criterion ↔ test). Never reuse or renumber an ID
    once assigned.
+
+   **Revising an existing SPEC** follows the Revision rules in the ARTIFACTS SPEC section: **amend** in
+   place under the stable `AC-N` (new text, same ID); **add** at the next free `AC-N` **above the
+   highest ever used** — a whole-file scan that counts `(was AC-N)` notes too; **withdraw** by
+   relocating the criterion out of `## Acceptance criteria` to `## Out of scope` as an unbolded `- (was
+   AC-N) <what + why withdrawn>` note (the ID stays in-file so it can never be reused). That ARTIFACTS
+   block is the source of truth — on any divergence it wins.
 
 4. **Completeness sweep — hunt what the feature implies but the criteria don't state.** The step-5
    self-check form-checks each criterion but cannot catch a *missing* one, so before it, ask

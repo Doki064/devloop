@@ -18,9 +18,10 @@ Keep probe fixtures on a different file/fact than any fix you're about to test �
 grades the fix, not the behavior.
 
 ### 2. Run the pipeline end-to-end, both model tiers
-One `claude -p "/devloop:devloop <feature>"` call per tier, with `--plugin-dir` pointing at the shipped
-bytes and `--model <tier>` per run (headless needs the **namespaced** command — a bare `/devloop` prints
-`Unknown command` and **exits 0**, so check for artifacts, never the exit code). Add `--permission-mode
+One `claude -p "/devloop:drive <feature>"` call per tier, with `--plugin-dir` pointing at the shipped
+bytes and `--model <tier>` per run (the entry is `/devloop:drive` since the Phase-3.5 commands→skills
+migration retired bare `/devloop`; an unknown command prints `Unknown command` and **exits 0**, so
+check for artifacts, never the exit code). Add `--permission-mode
 acceptEdits` **plus** `--allowedTools "Bash Read Write Edit Glob Grep Task Skill TodoWrite WebSearch
 WebFetch"`: acceptEdits alone blocks Bash/Skill/Task and wedges the pipeline, and headless runs cannot
 answer permission prompts. End-to-end means spec→verify

@@ -1,6 +1,7 @@
 ---
 name: implement
 description: This skill should be used when the user wants to work a finished PLAN into code in a devloop project — when they say "implement this", "work the plan", "build the tasks", "start implementing", or after plan and before verify. Delegates to the implementer agent, which works the PLAN.md tasks test-first and commits them.
+argument-hint: "<feature-name>"
 allowed-tools:
   - Glob
   - Task
@@ -14,7 +15,8 @@ hygiene — the detailed edit-by-edit reasoning stays out of this conversation; 
 
 ## Process
 
-1. **Slugify** the feature name you were given (lowercase, hyphens) → `<slug>`. Parse an optional
+1. The feature name is `$ARGUMENTS` (slash-invoked) or inferred from the conversation / asked when
+   empty (model-invoked). **Slugify** it (lowercase, hyphens) → `<slug>`. Parse an optional
    **`heal`** token from the arguments (the driver's self-heal loop passes it after a verify FAIL);
    absent by default → a normal implement.
 

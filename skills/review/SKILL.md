@@ -1,6 +1,7 @@
 ---
 name: review
 description: This skill should be used when the user wants to qualitatively audit or assess the quality of a devloop feature against its own SPEC/PLAN — when they say "review this devloop feature", "review this feature's plan", "audit this feature's implementation", "is this plan well-shaped", or as a quality pass at the plan→implement seam or before ship. Delegates to the reviewer agent, which returns advisory one-line findings. Parameterized by target=plan|impl (default impl). Not a general code review — scoped to a devloop feature's artifacts.
+argument-hint: "<feature-name> [target=plan|impl]"
 allowed-tools:
   - Glob
   - Task
@@ -21,7 +22,8 @@ never present them as a blocker, never let them touch the verify verdict.
 
 ## Process
 
-1. **Slugify** the feature name you were given (lowercase, hyphens) → `<slug>`. Parse an optional
+1. The feature name is `$ARGUMENTS` (slash-invoked) or inferred from the conversation / asked when
+   empty (model-invoked). **Slugify** it (lowercase, hyphens) → `<slug>`. Parse an optional
    `target=plan|impl` token from the arguments; **default `impl`**. (`target` names the *artifact*
    under review — deliberately not verify's `stage`; both accept `plan|impl`.)
 

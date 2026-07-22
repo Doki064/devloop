@@ -1,6 +1,7 @@
 ---
 name: drive
-description: This skill should be used when the user wants to run the whole devloop pipeline for a feature end-to-end in one go — when they say "drive this feature", "run the full loop", "take this from spec to a PR", or invoke /devloop <feature-name>. Sequences discuss → research → spec → plan → implement → verify autonomously — uncertainty-gated front door, the plan-verify + plan-review seam, mid-pipeline REGATE re-entry routing — and stops at the ship boundary (the human checkpoint). Each stage is also runnable standalone via /devloop:<stage>.
+description: This skill should be used when the user wants to run the whole devloop pipeline for a feature end-to-end in one go — when they say "drive this feature", "run the full loop", "take this from spec to a PR", or invoke /devloop:drive <feature-name>. Sequences discuss → research → spec → plan → implement → verify autonomously — uncertainty-gated front door, the plan-verify + plan-review seam, mid-pipeline REGATE re-entry routing — and stops at the ship boundary (the human checkpoint). Each stage is also runnable standalone via /devloop:<stage>.
+argument-hint: "<feature-name>"
 allowed-tools:
   - Skill
   - Task
@@ -26,7 +27,8 @@ Each stage remains runnable standalone (`/devloop:<stage> <feature>`); drive jus
 
 ## Inputs
 
-Slugify the feature name you were given (lowercase, hyphens) → `<slug>`. Pass the **raw feature
+The feature name is `$ARGUMENTS` (slash-invoked) or inferred from the conversation / asked when empty
+(model-invoked). Slugify it (lowercase, hyphens) → `<slug>`. Pass the **raw feature
 name** to each stage skill (they slugify themselves identically); use `<slug>` only for drive's own
 git/glob operations (branch name, `specs/<slug>/` gates, artifact commit).
 
@@ -60,7 +62,7 @@ orphaned marker, clears a stale pointer — it **preserves** a dirty tree, never
   this is the self-heal-or-fail-closed boundary the raw fail-closed check below used to dead-end at.
 
 **Resume entry — skip stages already completed.** drive is resumable by re-invocation: a run cut short
-(context limit, Ctrl-C, crash) is continued by running `/devloop <feature>` again. Each stage drops a
+(context limit, Ctrl-C, crash) is continued by running `/devloop:drive <feature>` again. Each stage drops a
 write-once `specs/<slug>/<stage>.done` marker (via the same helper) as its gate clears. Compute
 **entry = the first of [discuss, research, spec, plan, implement] whose `.done` marker is absent**
 (all five present → enter at step 6 to reconfirm), then **skip only the stages strictly before

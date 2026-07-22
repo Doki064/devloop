@@ -1,6 +1,7 @@
 ---
 name: verify
 description: This skill should be used when the user wants to grade a devloop feature against its SPEC — when they say "verify this", "run verify", "check the implementation", "does this meet the spec", or after implement and before ship. Delegates to the verifier agent, which reasoning-blindly builds VERIFY.md from real test output, artifacts, and the git log. Parameterized by stage=plan|impl (default impl).
+argument-hint: "<feature-name> [stage=plan|impl]"
 allowed-tools:
   - Glob
   - Task
@@ -15,7 +16,8 @@ never enters the judgment; only the verdict returns.
 
 ## Process
 
-1. **Slugify** the feature name you were given (lowercase, hyphens) → `<slug>`. Parse an optional
+1. The feature name is `$ARGUMENTS` (slash-invoked) or inferred from the conversation / asked when
+   empty (model-invoked). **Slugify** it (lowercase, hyphens) → `<slug>`. Parse an optional
    `stage=plan|impl` token from the arguments; **default `impl`**.
 
 2. **Check the precondition.** Confirm `specs/<slug>/PLAN.md` exists (via Glob). If it does not, stop

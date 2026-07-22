@@ -1,6 +1,7 @@
 ---
 name: doctor
 description: This skill should be used when the user wants to diagnose a devloop project's pipeline health — when they say "run doctor", "check pipeline health", "is the resume state consistent", "diagnose this feature", or invoke /devloop:doctor. Delegates to the doctor agent, which reasoning-blindly checks the resume-core machine state (.done markers, .devloop/active) against artifacts + git and applies only work-safe fixes with --fix. Also called by the driver pre-resume so an inconsistent state self-heals instead of dead-ending.
+argument-hint: "[<feature-name>] [--fix]"
 allowed-tools:
   - Read
   - Task
@@ -15,7 +16,9 @@ sees only the verdict + what was fixed, never the scan noise.
 
 ## Process
 
-1. **Resolve the slug.** If a feature name was given, slugify it (lowercase, hyphens) → `<slug>`. If
+1. **Resolve the slug.** The invocation arguments (`$ARGUMENTS` when slash-invoked) carry the optional
+   feature name plus flags. If a feature name was given (or is inferable from the conversation when
+   model-invoked), slugify it (lowercase, hyphens) → `<slug>`. If
    **none** was given, read `.devloop/active` (the in-flight pointer) and use its trimmed content as the
    slug. If there is no argument **and** no `.devloop/active`, stop and report: *"no active feature —
    pass a feature name (`/devloop:doctor <feature>`)."* Do not guess.

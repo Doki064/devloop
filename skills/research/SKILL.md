@@ -1,6 +1,7 @@
 ---
 name: research
 description: This skill should be used when the user wants to answer a devloop feature's open research questions before speccing — when they say "research this feature", "run research", "answer the open questions", "resolve the research questions", or after discuss leaves route=research questions in specs/<slug>/INTENT.md. Dispatches researcher agents (parallel when questions are independent) and merges their findings into specs/<slug>/RESEARCH.md; unanswered questions become named risks for spec.
+argument-hint: "<feature-name>"
 allowed-tools:
   - Read
   - Write
@@ -25,7 +26,8 @@ finding no question asked for is a defect, not a bonus.
 
 ## Process
 
-1. **Slugify** the feature name (lowercase, hyphens) → `<slug>`.
+1. The feature name is `$ARGUMENTS` (slash-invoked) or inferred from the conversation / asked when
+   empty (model-invoked). **Slugify** it (lowercase, hyphens) → `<slug>`.
 
 2. **Check the precondition.** Confirm `specs/<slug>/INTENT.md` exists. If it does not, stop:
    with no question ledger there is nothing bounded to research — tell the user to run

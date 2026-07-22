@@ -1,6 +1,7 @@
 ---
 name: discuss
 description: This skill should be used when the user wants to clarify a feature's intent before speccing it in a devloop project — when they say "discuss this feature", "clarify the requirements", "what's unclear about X", "triage this feature", or when a feature idea is too vague to spec without guessing, or when a later pipeline stage surfaces a REGATE spec-invalidating discovery that must be folded back into intent. Records the surviving questions and their answers or assumptions in specs/<slug>/INTENT.md and ASSUMPTIONS.md; an `auto` token in the invocation selects autonomous mode (reversible assumptions instead of questions).
+argument-hint: "<feature-name> [auto]"
 allowed-tools:
   - Read
   - Write
@@ -20,7 +21,8 @@ clear, the correct output is *nothing*: the skip is the no-op that lets the pipe
 
 ## Inputs
 
-Slugify the feature name (lowercase, hyphens) → `<slug>`. Gather the bounded working set — read
+The feature name is `$ARGUMENTS` (slash-invoked) or inferred from the conversation / asked when empty
+(model-invoked). Slugify it (lowercase, hyphens) → `<slug>`. Gather the bounded working set — read
 only what informs this feature, never the whole project:
 
 - `specs/<slug>/INTENT.md` if it already exists — re-invocation **enriches, never clobbers**:

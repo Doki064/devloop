@@ -1,5 +1,5 @@
 {
-  "description": "devloop gates — TDD RED-skip gate (2c) + heal-scoped readonly path guard (self-heal safety).",
+  "description": "devloop gates — TDD RED-skip gate + heal-scoped readonly path guard (self-heal safety).",
   "hooks": {
     "PreToolUse": [
       {

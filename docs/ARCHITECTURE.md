@@ -54,7 +54,7 @@ skills/ drive + spec|ship (inline) + plan|implement|verify|doctor|review (thin�
         each: SKILL.md
 agents/ planner|implementer|verifier|doctor|reviewer.md + researcher.md (Phase 3)
 hooks/ hooks.json + scripts/ (tdd-gate, heal-guard; Phase 5 adds readonly-paths + invariant hooks)
-scripts/ deterministic gate checks + tests (atomic-write, doctor-scan, replan-decision)
+scripts/ deterministic gate checks + tests (atomic-write, doctor-scan, replan-decision, intent-lint)
 ```
 **Per-target-project:** `CLAUDE.md · CONSTITUTION.md · ROADMAP.md (lean index: slug·status·goal·risk·depends[]·Boundary) · src/+tests/ · docs/ · .devloop/ (active, archive/) · specs/<slug>/ (SPEC durable · PLAN · INTENT/RESEARCH/VERIFY/REVIEW/PROGRESS/ASSUMPTIONS ephemeral · <stage>.done)`
 

@@ -54,7 +54,7 @@ Run every landed slice against these; headline findings tend to come from here:
   representation → planner dumps it in Coverage gaps → verifier orphan-BLOCK. Fix by adding one line to
   ARTIFACTS, then re-checking referrers.) — and the **inverse**: a contract line promising a consumer
   behavior no consumer implements (grep the named consumer skill for the artifact's filename).
-- **Deferral markers:** right phase, greppable, no current/completed-phase debt (`grep -rn "DEFERRED(Phase <cur>"`).
+- **Deferral markers:** right phase, greppable, no current/completed-phase debt (`grep -rn "DEFERRED(Phase <cur>)"`).
 - **For code:** which direction does it fail (open vs closed)? regex injection? edge cases (empty input,
   first-ever commit, ambiguous/duplicate matches, non-repo)?
 

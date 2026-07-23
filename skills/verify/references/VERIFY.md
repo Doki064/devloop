@@ -2,7 +2,8 @@
 
 - **Purpose:** reasoning-blind evidence that criteria are met — judges artifacts + real test output +
   git log, **never** the implementer's narrative.
-- **Location:** `specs/<slug>/VERIFY.md` · **Durability:** EPHEMERAL (archived on ship).
+- **Location:** `specs/<slug>/VERIFY.md` · **Durability:** EPHEMERAL (ship-time archival is
+  `DEFERRED(Phase 4)` — see `skills/ship/SKILL.md`; currently left in place, not archived).
 - **Parameterized:** `stage=plan` (goal-backward coverage check) or `stage=impl` (run tests +
   TDD-commit check). Same-path, latest-write-wins — the header records which stage wrote it.
 

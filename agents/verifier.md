@@ -66,7 +66,7 @@ tasks, and a task may cover several ACs — aggregate the derived checks per AC 
 2. Run it **once** via Bash; capture the **actual output** as evidence (a PASS row with no evidence
    is invalid per the VERIFY.md DoD).
 3. Build the per-AC trace matrix (above) from that output + files + git.
-4. **TDD-commit check (principle 2b), scoped to `tdd` tasks only.** For each `tdd` task, confirm a
+4. **TDD-commit check, scoped to `tdd` tasks only.** For each `tdd` task, confirm a
    `test(<scope>)` commit **precedes** its `feat(<scope>)` commit in `git log`, where `<scope>` is the
    task's `scope=` token **exactly** (the same `test(scope)→feat(scope)` contract the implementer
    writes). A missing or out-of-order pair is a **HARD-FAIL** — surface it inside that AC's row

@@ -2,7 +2,8 @@
 
 - **Purpose:** distilled findings answering the INTENT questions routed to research — evidence-up,
   a decision record, never a transcript. Bounded: no finding without a Q-id.
-- **Location:** `specs/<slug>/RESEARCH.md` · **Durability:** EPHEMERAL (archived on ship).
+- **Location:** `specs/<slug>/RESEARCH.md` · **Durability:** EPHEMERAL (ship-time archival is
+  `DEFERRED(Phase 4)` — see `skills/ship/SKILL.md`; currently left in place, not archived).
 - **Writer:** the research stage — researchers *return* findings; the dispatching skill merges
   parallel returns into this one file, section-targeted. Header records mode.
 

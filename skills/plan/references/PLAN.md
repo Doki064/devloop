@@ -1,7 +1,8 @@
 # PLAN.md — artifact contract
 
 - **Purpose:** turns the SPEC into an executable, traceable task breakdown.
-- **Location:** `specs/<slug>/PLAN.md` · **Durability:** EPHEMERAL (archived on ship).
+- **Location:** `specs/<slug>/PLAN.md` · **Durability:** EPHEMERAL (ship-time archival is
+  `DEFERRED(Phase 4)` — see `skills/ship/SKILL.md`; currently left in place, not archived).
 - **Grouping unit is the feature, not a tier inside PLAN:** PLAN stays a flat, feature-scoped task
   list; grouping/sequencing lives one tier up in ROADMAP (`depends`/`Boundary`), never as a phase
   tier inside PLAN — if a feature's scope outgrows one coherent PLAN, tighten its ROADMAP Boundary
@@ -33,7 +34,7 @@
 <none | AC-N: reason it cannot be mapped to a task>
 ```
 
-Task fields: stable `T<N>` id (`T1`, `T2`, …) · `[tdd|standard]` tag · `scope=`\`token\` (the commit
+Task fields: stable `T<N>` id (`T1`, `T2`, …) · `[tdd|standard]` tag · `scope=<token>` (the commit
 scope the TDD hook matches, e.g. `test(auth)`→`feat(auth)`) · `deps=[T-ids]` · optional `[P]` parallel
 marker · `covers=[AC-ids]` for the trace matrix.
 

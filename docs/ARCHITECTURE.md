@@ -25,7 +25,7 @@ Per feature: `discuss → research → SPEC → plan → implement → verify �
 ## Core principles
 1. **Spec = contract.** Every criterion falsifiable and **maps to a test**; verify flags unmapped criteria. Untestable → explicit lower-confidence tier / human checkpoint (named holes, not silent).
 2. **TDD gate = defense in depth.** (a) implement procedure IS red→green→refactor; (b) verify HARD-FAILs if a `tdd` task lacks `test(scope)→feat(scope)`; (c) tag-aware blocking hook (reads PLAN scope tags, JSON `deny` only on confirmed violations). Ship blocked on verify PASS.
-3. **Bounded working set.** A stage reads only `specs/<feature>/` + dependency SPECs + thin CONSTITUTION — never the whole project. Cross-feature regressions caught by **running the full test suite** (executable memory that doesn't rot). SPEC durable; process docs archived on ship.
+3. **Bounded working set.** A stage reads only `specs/<feature>/` + dependency SPECs + thin CONSTITUTION — never the whole project. Cross-feature regressions caught by **running the full test suite** (executable memory that doesn't rot). SPEC durable; process docs ephemeral (ship-time archival `DEFERRED(Phase 4)` — not archived yet).
 4. **Autonomy guardrails.** Tests+SPEC **read-only** to the heal loop (path-guard hook) — prevents reward-hacking the verifier. Self-heal capped (3) + no-progress early-abort. **Fail closed** unattended. Reasoning-blind verifier/doctor. Scope-drift guard (re-anchor on frozen SPEC).
 5. **Context hygiene.** Subagent isolation + file handoff = external memory; artifacts are distilled decision records, never transcripts; stages prompt a `/clear` between standalone runs.
 6. **Docs are routers, not dumps** (honored + enforced). Lean; plain-path pointers not eager `@`-imports; instruction budget ~150–200 lines; prune test. devloop generates structure, prompts human for judgment. Doctor has a doc-hygiene check.
@@ -58,7 +58,7 @@ scripts/ deterministic gate checks + tests (atomic-write, doctor-scan, replan-de
 ```
 **Per-target-project:** `CLAUDE.md · CONSTITUTION.md · ROADMAP.md (lean index: slug·status·goal·risk·depends[]·Boundary) · src/+tests/ · docs/ · .devloop/ (active, archive/) · specs/<slug>/ (SPEC durable · PLAN · INTENT/RESEARCH/VERIFY/REVIEW/PROGRESS/ASSUMPTIONS ephemeral · <stage>.done)`
 
-Durability: DURABLE (accumulates) = SPEC + ROADMAP + CONSTITUTION. EPHEMERAL (archive on ship) = INTENT/RESEARCH/PLAN/VERIFY/REVIEW/PROGRESS/ASSUMPTIONS. DERIVED (regen) = PROGRESS, trace matrix. Every project (devloop included) has CLAUDE.md → docs/ created on-demand per prune test.
+Durability: DURABLE (accumulates) = SPEC + ROADMAP + CONSTITUTION. EPHEMERAL (ship-time archival `DEFERRED(Phase 4)`, currently left in place) = INTENT/RESEARCH/PLAN/VERIFY/REVIEW/PROGRESS/ASSUMPTIONS. DERIVED (regen) = PROGRESS, trace matrix. Every project (devloop included) has CLAUDE.md → docs/ created on-demand per prune test.
 
 ## Phased build roadmap
 MVP-first; each phase independently testable; implementation decisions deferred to the phase that needs them.

@@ -1,14 +1,17 @@
 #!/usr/bin/env node
-// devloop TDD gate — layer (c) of the TDD defense-in-depth (ARCHITECTURE principle 2c).
+// devloop TDD gate — the tag-aware blocking-hook layer of the TDD defense-in-depth
+// (see docs/ARCHITECTURE.md, "TDD gate = defense in depth").
 // PreToolUse/Bash hook: DENY a `git commit` that skips RED. FAILS OPEN — emit `deny` ONLY on a
 // positively-confirmed violation; allow (exit 0, no output) on any uncertainty. A false deny would
-// block legitimate/non-devloop commits — worse than a miss, which the reasoning-blind verifier (2b)
-// still backstops before ship. Node built-ins only (no npm packages, no external JSON tool, no POSIX
-// shell) so it runs the same on Linux/macOS/Windows; devloop requires `git` and `node`.
+// block legitimate/non-devloop commits — worse than a miss, which the reasoning-blind verifier's
+// TDD-commit check still backstops before ship. Node built-ins only (no npm packages, no external
+// JSON tool, no POSIX shell) so it runs the same on Linux/macOS/Windows; devloop requires `git` and
+// `node`.
 //
 // DEFERRED(Phase 5): baseRef/worktree-bounded git-log range; scan the current branch for now.
 // (Twin of verifier.md:15 — a stale test(<scope>) from a prior shipped feature could satisfy the RED
-// check; that is a miss in the fail-open direction, never a false deny, and (2b) still backstops it.)
+// check; that is a miss in the fail-open direction, never a false deny, and the verifier's
+// TDD-commit check still backstops it.)
 import { readFileSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
@@ -29,7 +32,8 @@ if (!command.includes('git commit')) process.exit(0);
 // Anchoring at the subject start means a feat(x): mention inside another commit's body cannot fire.
 // No parseable literal -m value (-F file / editor / --amend without -m / a $(…)-substituted subject
 // like `-m "$(cat <<EOF …)"`) → fail open. The implementer commits TDD steps with a literal -m subject
-// (agents/implementer.md) so this gate can read it; a heredoc subject is a fail-open miss (2b backstops).
+// (agents/implementer.md) so this gate can read it; a heredoc subject is a fail-open miss (the
+// verifier's TDD-commit check backstops it).
 const m = command.match(/(^|\s)(-[A-Za-z]*m|--message)(=|\s+)"([^"]*)"/) ||
           command.match(/(^|\s)(-[A-Za-z]*m|--message)(=|\s+)'([^']*)'/);
 if (!m) process.exit(0);

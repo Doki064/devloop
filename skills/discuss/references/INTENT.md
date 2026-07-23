@@ -7,7 +7,8 @@ Q-id join (terminal check: the SPEC DoD) — no status fields, single writer per
 
 - **Purpose:** the feature's front door — goal + uncertainty coverage + the open-question ledger
   that gates and bounds discuss/research. The list is the signal, not a vibe.
-- **Location:** `specs/<slug>/INTENT.md` · **Durability:** EPHEMERAL (archived on ship).
+- **Location:** `specs/<slug>/INTENT.md` · **Durability:** EPHEMERAL (ship-time archival is
+  `DEFERRED(Phase 4)` — see `skills/ship/SKILL.md`; currently left in place, not archived).
 - **Writers:** triage seeds Goal/Coverage/Questions; discuss appends Answers and Decisions (a
   determined mid-pipeline correction may seed its Answer in the same triage write — see the discuss
   skill's re-gate path). Absent file = all-Clear (front-end skipped).

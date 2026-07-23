@@ -2,7 +2,8 @@
 
 - **Purpose:** defaults chosen without the user — the audit trail that makes autonomous degrade
   safe. Ship surfaces the whole file in the PR for human confirmation ([irreversible] first).
-- **Location:** `specs/<slug>/ASSUMPTIONS.md` · **Durability:** EPHEMERAL (archived on ship).
+- **Location:** `specs/<slug>/ASSUMPTIONS.md` · **Durability:** EPHEMERAL (ship-time archival is
+  `DEFERRED(Phase 4)` — see `skills/ship/SKILL.md`; currently left in place, not archived).
 - **Writers:** discuss in autonomous mode (self-Q&A); triage's record-as-assumption filter.
 
 ```markdown

@@ -36,8 +36,8 @@ only what informs this feature, never the whole project:
   **triage evidence** and walk the taxonomy against it like any other input. It is ledger material by
   definition (the blocklist carve-out below); recording it is the point.
 
-**Mode:** an `auto` token in the invocation (mirroring implement's `heal`/`replan` convention)
-selects autonomous mode. Token absent → interactive.
+**Mode:** an `auto` token in the invocation (mirroring implement's `heal` token and plan's
+`replan` token) selects autonomous mode. Token absent → interactive.
 
 ## Phase 1 — triage (complete before any answering)
 

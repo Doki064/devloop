@@ -26,8 +26,9 @@ never enters the judgment; only the verdict returns.
    the agent, which has git; do not attempt it here.)
 
 3. **Dispatch the `verifier` agent** via Task, passing `<slug>` and `stage`. The agent reads its own
-   bounded working set and writes VERIFY.md. Do not read the PLAN or run tests in this context — let
-   the agent own that (reasoning-blindness depends on it).
+   bounded working set and writes `specs/<slug>/VERIFY.md` per the schema in
+   `${CLAUDE_PLUGIN_ROOT}/skills/verify/references/VERIFY.md`. Do not read the PLAN or run tests in
+   this context — let the agent own that (reasoning-blindness depends on it).
 
 4. **On return, surface the verdict.** Report the agent's summary (verdict, AC pass/fail counts, any
    BLOCK / WARN / MANUAL, any reverse-trace `contradicts` (gating) / `unrequested` (advisory), test

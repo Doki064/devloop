@@ -29,7 +29,8 @@ context hygiene — the detailed reasoning stays out of this conversation; only 
    **plus any discovery text stated with it** (the agent treats REVIEW.md and/or the discovery as
    its finding sources). The agent reads its own bounded working set (SPEC +
    CONSTITUTION + ROADMAP + dependency SPECs — plus `REVIEW.md` in re-plan mode when present) and writes
-   `specs/<slug>/PLAN.md`. Do not read the SPEC or draft tasks in this context — let the agent own that.
+   `specs/<slug>/PLAN.md` per the schema in `${CLAUDE_PLUGIN_ROOT}/skills/plan/references/PLAN.md`. Do
+   not read the SPEC or draft tasks in this context — let the agent own that.
 
 4. **On return, check the result.** If the agent returned a **`REGATE spec-invalidating: …`** line
    (a finding only a contract change can satisfy — it stopped before emitting a plan), surface it

@@ -3,7 +3,8 @@
 - **Purpose:** durable, advisory quality findings — the reviewer's qualitative judgment of whether a
   PLAN or the implementation is well-shaped (simple, secure, idiomatic, true to SPEC intent). The
   **deliberate inverse of VERIFY.md**: judgment, not reasoning-blind evidence.
-- **Location:** `specs/<slug>/REVIEW.md` · **Durability:** EPHEMERAL (archived on ship, like VERIFY).
+- **Location:** `specs/<slug>/REVIEW.md` · **Durability:** EPHEMERAL, like VERIFY (ship-time archival
+  is `DEFERRED(Phase 4)` — see `skills/ship/SKILL.md`; currently left in place, not archived).
 - **Parameterized:** `target=plan` (judge the PLAN vs the SPEC) or `target=impl` (judge the changed
   code). Same-path, latest-write-wins — the header records which (mirrors VERIFY.md's `stage=`).
 - **Advisory — never a gate.** REVIEW.md carries **no PASS/FAIL verdict**: a verdict would read as a

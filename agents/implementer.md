@@ -56,7 +56,7 @@ Process tasks **sequentially in `deps=` order** (a task runs only after its `dep
 markers are informational — parallel dispatch is a driver concern, not yours. For each task:
 
 ### `tdd` tasks — the exact commit contract
-<!-- The tag-aware TDD blocking hook (2c) enforces this deterministically at commit time; this procedure is layer (a), and the verifier's 2b git-log check is the reasoning-blind backstop before ship. -->
+<!-- The tag-aware TDD hook enforces this deterministically at commit time; the verifier's TDD-commit check is the reasoning-blind backstop before ship. -->
 <!-- The driver re-invokes this agent in heal mode on a verify FAIL (skills/drive/SKILL.md step 6a); the capped/no-progress loop lives there. See "Heal mode" below. -->
 
 1. **RED.** Write the failing test first, against the SPEC criteria the task `covers=`. Run the test
@@ -69,9 +69,9 @@ markers are informational — parallel dispatch is a driver concern, not yours. 
 3. **REFACTOR (optional).** Improve the code while the tests stay green. Commit `refactor(<scope>): <desc>`.
 
 `<scope>` is **exactly** the task's `scope=` token — the verifier and the TDD hook match on it, so a
-mismatch breaks the gate. Write each commit with a **literal `-m "type(scope): subject"`** so the 2c
-commit hook can read the subject; a `$(cat <<EOF)`-substituted subject fails the hook open, leaving
-only the verifier's 2b check to catch a skipped RED. Never weaken or delete a test to make it pass;
+mismatch breaks the gate. Write each commit with a **literal `-m "type(scope): subject"`** so the TDD
+hook can read the subject; a `$(cat <<EOF)`-substituted subject fails the hook open, leaving
+only the verifier's TDD-commit check to catch a skipped RED. Never weaken or delete a test to make it pass;
 never fake GREEN.
 
 ### `standard` tasks

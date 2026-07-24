@@ -34,7 +34,7 @@
 <none | AC-N: reason it cannot be mapped to a task>
 ```
 
-Task fields: stable `T<N>` id (`T1`, `T2`, …) · `[tdd|standard]` tag · `scope=<token>` (the commit
+Task fields: stable `T<N>` id (`T1`, `T2`, …) · `[tdd|standard]` tag · `` scope=`<token>` `` (the commit
 scope the TDD hook matches, e.g. `test(auth)`→`feat(auth)`) · `deps=[T-ids]` · optional `[P]` parallel
 marker · `covers=[AC-ids]` for the trace matrix.
 

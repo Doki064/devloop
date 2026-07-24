@@ -11,7 +11,7 @@ Key ideas: the **SPEC is a falsifiable contract** every criterion maps to a test
 Early development, built in phases — see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). **Phases 1–3.5 complete**: the core SDD-TDD loop (`spec` → `ship` stages, advisory `review` lane, tag-aware TDD commit hook); orchestration — the `drive` orchestrator (`/devloop:drive <feature>`), self-heal, resume-from-artifacts, the `doctor` health check, and the plan-review→re-plan loop; the uncertainty-gated `discuss`/`research` front-end with blast-radius re-gating (`REGATE`) wired through the driver; and a modernization + hardening batch (artifact-contract split, reverse-trace audit, plan-exit coverage lint, heal-exhaustion escalation, research spikes). Next: Phase 4 (brownfield + multi-feature).
 
 ## Requirements
-`git`, `node`, and the [`gh` CLI](https://cli.github.com/) (ship uses it to open the PR). The commit hooks and gate scripts are cross-platform Node, no shell or `jq`.
+`git`, `node`, and the [`gh` CLI](https://cli.github.com/) (ship uses it to open the PR). On **Windows** you also need a POSIX shell — [Git for Windows](https://git-scm.com/downloads/win) (which provides Git Bash) or WSL — because the pipeline skills issue POSIX commands (`date -u`, `sed`, `grep`, `rm -f`, `mkdir -p`) through Claude Code's Bash tool, and [without one Claude Code falls back to PowerShell](https://code.claude.com/docs/en/setup#set-up-on-windows), where they don't run. The commit hooks and gate scripts (`hooks/`, `scripts/`) are **cross-platform Node** — the hook runner exec's `node` directly, so they carry no shell or `jq` dependency and run regardless. (De-shelling the skills so they don't need a POSIX shell either is Phase-5 work.)
 
 ## Try it locally
 ```

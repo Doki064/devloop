@@ -34,7 +34,7 @@ Each contract lives with its writer stage; consumers reference the specific file
 | SPEC.md | `skills/spec/references/SPEC.md` | durable feature contract every downstream stage is graded against (+ EARS quick reference). |
 | PLAN.md | `skills/plan/references/PLAN.md` | turns the SPEC into an executable, traceable task breakdown. |
 | VERIFY.md | `skills/verify/references/VERIFY.md` | reasoning-blind evidence that criteria are met (artifacts + test output + git log). |
-| REVIEW.md | `skills/review/references/REVIEW.md` | durable, advisory quality findings — the deliberate inverse of VERIFY.md. |
+| REVIEW.md | `skills/review/references/REVIEW.md` | advisory quality findings recorded to disk — the deliberate inverse of VERIFY.md. (Durability class is EPHEMERAL; "recorded" here contrasts with a transient chat verdict, not with the DURABLE tier.) |
 | INTENT.md | `skills/discuss/references/INTENT.md` | the feature's front door + question/decision ledger (+ the front-end-trio preamble). |
 | RESEARCH.md | `skills/research/references/RESEARCH.md` | distilled findings answering the INTENT questions routed to research. |
 | ASSUMPTIONS.md | `skills/discuss/references/ASSUMPTIONS.md` | defaults chosen without the user — the autonomous-degrade audit trail. |

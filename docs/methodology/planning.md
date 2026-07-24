@@ -8,7 +8,7 @@ it until review-ready. Load this with `/plan-methodology <slice>`.
 ## The loop (run in order; iterate back to earlier steps as findings land)
 
 ### 1. Pick the next thing from the repo's own signals — not from memory
-Read the build-status line (CLAUDE.md), the roadmap (ARCHITECTURE), and `grep -rn "DEFERRED(Phase <N>)"`.
+Read the Build status section (CLAUDE.md), the roadmap (ARCHITECTURE), and `grep -rn "DEFERRED(Phase <N>)"`.
 The next component is whatever those name as pending. **Do not trust the session-start git snapshot or
 memory** — both can be stale or contradictory. Confirm state with a live `git log --oneline` / `git status`
 before believing any "X is done / pending" claim.
